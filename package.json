@@ -1,14 +1,24 @@
 {
-  "name": "application-name",
-  "version": "0.0.1",
-  "private": true,
-  "scripts": {
-    "start": "coffee app.coffee",
-    "test": "echo todo"
-  },
-  "dependencies": {
-    "express": "3.0.0beta7",
-    "hjs": "*",
-    "stylus": "*"
-  }
+    "author": {
+        "name": "Manfred Touron",
+        "email": "m@42.am",
+        "url": "http://github.com/moul"
+    }
+    "name": "kickstart2",
+    "version": "0.0.1",
+    "description": "Preconfigured Express environment with multiple modules. See http://github.com/moul/kickstart2 for usage.",
+    "private": false,
+    "scripts": {
+        "start": "coffee app.coffee",
+        "test": "open ./public/test.html"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/moul/kickstart2"
+    },
+    "dependencies": {
+        "express": "3.0.0beta7",
+        "hjs": "*",
+        "stylus": "*"
+    }
 }
