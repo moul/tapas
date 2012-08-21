@@ -3,22 +3,58 @@
         "name": "Manfred Touron",
         "email": "m@42.am",
         "url": "http://github.com/moul"
-    }
+    },
+    "contributors": [
+        {
+            "name": "Manfred Touron",
+            "email": "m@42.am"
+        }
+    ],
     "name": "kickstart2",
     "version": "0.0.1",
+    "homepage": "https://github.com/moul/kickstart2",
     "description": "Preconfigured Express environment with multiple modules. See http://github.com/moul/kickstart2 for usage.",
     "private": false,
     "scripts": {
         "start": "coffee app.coffee",
-        "test": "open ./public/test.html"
+        "test": "open ./public/test.html",
+        "prepublish": "npm prune"
+    },
+    "bin": {
     },
     "repository": {
         "type": "git",
         "url": "git://github.com/moul/kickstart2"
     },
+    "engines": {
+        "node": ">= 0.8.2"
+    },
     "dependencies": {
         "express": "3.0.0beta7",
         "hjs": "*",
         "stylus": "*"
-    }
+    },
+    "devDependencies": {
+        "coffee-script": ">= 0.0.1",
+        "uglify-js": ">= 1.0.7",
+        "uubench": "0.0.1",
+        "markdown": ">= 0.0.1",
+        "mocha": "*"
+    },
+    "keywords": [
+        "express",
+        "kickstart",
+        "boilerplate",
+        "web",
+        "stream",
+        "cron",
+        "less",
+        "jade",
+        "rest",
+        "stylus",
+        "hogan",
+        "framework"
+    ],
+    "main": "lib/index.coffee",
+    "readme": ""
 }
