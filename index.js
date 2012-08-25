@@ -1,1 +1,1 @@
-module.exports = require('./lib/index.coffee');
+module.exports = require('./lib');

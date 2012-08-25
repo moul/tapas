@@ -1,7 +1,6 @@
-express = module.exports.express = require 'express'
+module.exports = ks     = () ->
 
-module.exports.app = express()
-
-module.exports.runApp           = -> require('./runApp')(module.exports)
-module.exports.runCron          = -> require('./runCron')(module.exports)
-module.exports.runStream        = -> require('./runStream')(module.exports)
+ks.config               = {}
+ks.app                  = -> require('./app')   ks
+ks.cron                 = -> require('./cron')  ks
+ks.sream                = -> require('./sream') ks
