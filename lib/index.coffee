@@ -1,6 +1,16 @@
-module.exports = ks     = () ->
+class Kickstart2
+        constructor: (@config) ->
 
-ks.config               = {}
-ks.app                  = -> require('./app')   ks
-ks.cron                 = -> require('./cron')  ks
-ks.sream                = -> require('./sream') ks
+        @create: (config) ->
+                new Kickstart2 config
+
+        app: () =>
+                require('./app') @
+
+        cron: () =>
+                require('./cron') @
+
+        worker: () =>
+                require('./worker') @
+
+module.exports = Kickstart2.create
