@@ -22,6 +22,7 @@ defaultConfig =
         staticMaxAge: 86400
         locals:
                 site_name: 'Kickstart2'
+                description: ""
         viewOptions:
                 layout: false
                 pretty: false
@@ -33,10 +34,11 @@ defaultConfig =
 class ksApp
         constructor: (@ks) ->
                 @config = coffee.helpers.merge defaultConfig, @ks.config
+                @config.locals = coffee.helpers.merge defaultConfig.locals, @config.locals
                 @process = process
-                @ksAppInit()
+                do @ksAppInit
                 if @config.ksAppConfigure
-                        @ksAppConfigure()
+                        do @ksAppConfigure
 
         @create: (ks) ->
                 return new ksApp(ks)
@@ -52,6 +54,13 @@ class ksApp
         post: =>        @app.post.apply(@app, arguments)
         configure: =>   @app.configure.apply(@app, arguments)
 
+        restrict: (req, res, next) =>
+                if req.session.user
+                        do next
+                else
+                        req.session.error = "Access denied !"
+                        res.redirect "/login"
+
         ksAppConfigure: =>
                 for dir in @config.dirs
                         pathname = "#{dir}/views"
@@ -60,6 +69,16 @@ class ksApp
                                 break
                 @set 'view options', @config.viewOptions
                 @set 'view engine', @config.viewEngine
+
+                # res.message 'status message'
+                @app.response.message = (msg, type = 'default') ->
+                        sess = @req.session
+                        sess.messages = sess.messages || {}
+                        sess.messages[type] = sess.messages[type] || []
+                        sess.messages[type].push msg
+                        console.log sess.messages
+                        return @
+
                 if @config.viewOptions.pretty
                         @app.locals.pretty = true
                 for dir in @config.dirs
@@ -76,6 +95,15 @@ class ksApp
                 if @config.session
                         @use express.session(@config.session_secret || utils.uniqueId(12))
 
+                        @use (req, res, next) ->
+                                msgs = req.session.messages || {}
+                                count = 0
+                                count += msgs[type].length for type of msgs
+                                res.locals.messages = msgs
+                                res.locals.hasMessages = !!count
+                                req.session.messages = {}
+                                do next
+
                 # TODO: @use extras.fixIP ['x-forwarded-for', 'forwarded-for', 'x-cluster-ip']
 
 
@@ -84,9 +112,33 @@ class ksApp
                 # TODO: voir pour utiliser process.cwd
                 # 404, 500
 
+                #for dir in @config.dirs
+                #        @use express.compiler
+                #                src: "#{dir}/public", enable: ["less"]
+
                 @use @app.router
+
+                #@app.dynamicHelpers
+                #        bli: (req) ->
+                #                return 'salut'
+
                 if @config.stylus
-                        @use require('stylus').middleware("#{@config.dirname}/public")
+                        stylus = require 'stylus'
+                        image_paths = "#{dir}/public/images" for dir in @config.dirs
+                        for dir in @config.dirs
+                                @use stylus.middleware
+                                        debug: true
+                                        src: "#{dir}/public"
+                                        dest: "#{dir}/public"
+                                        compile: (str, path) ->
+                                                s = stylus str
+                                                s.set 'filename', path
+                                                s.set 'warn', true
+                                                s.set 'compress', true
+                                                s.define 'img', stylus.url
+                                                        paths: image_paths
+                                                        limit: 1000000
+                                                return s
 
                 #if config.cache
                 #        @use express.staticCache()
@@ -112,6 +164,14 @@ class ksApp
 
 
         run: =>
+                @app.use (err, req, res, next) ->
+                        if ~err.message.indexOf 'not found'
+                                return next()
+                        console.error err.stack
+                        res.status(500).render('5xx')
+                @app.use (req, res, next) ->
+                        res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
+
                 @http = http.createServer @app
                 port = @process.env.PORT || @config.port
                 @http.listen port, -> console.log "Express server listening on port #{port}"

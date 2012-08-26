@@ -1,0 +1,7 @@
+- console.log(messages)
+if hasMessages
+  .messages
+    for type_messages, type in messages
+      ul(class=type)
+        for message in type_messages
+          li message
