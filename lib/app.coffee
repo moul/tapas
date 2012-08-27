@@ -21,6 +21,7 @@ defaultConfig =
         viewEngine: 'jade' #hjs
         staticMaxAge: 86400
         locals:
+                title: 'Kickstart2'
                 site_name: 'Kickstart2'
                 description: ""
         viewOptions:
@@ -31,7 +32,54 @@ defaultConfig =
                 useBootstrap: true
         ksAppConfigure: true
 
+class ksSubApp
+        constructor: (@dir, name, @parent) ->
+                @path = "#{@dir}/#{name}"
+                console.log "#{@path}: autodiscovering"
+                @obj = require "#{@path}"
+                @name = @obj.name || name
+                @prefix = @obj.prefix || ''
+                @app = express()
+                if @obj.engine
+                        @app.set 'view engine', @obj.engine
+                @app.set 'views', "#{@path}/views"
+                if @obj.before
+                        for path in  ["/#{name}/:#{name}_id", "/#{name}/:#{name}_id/*"]
+                                @app.all path, @obj.before
+                                console.log "#{@path}: ALL #{path} -> before"
+
+                for key of @obj
+                        if ~['name', 'prefix', 'engine', 'before'].indexOf(key)
+                                continue
+                        switch key
+                                when "show"
+                                        method = 'get'
+                                        path = "/#{name}/:${name}_id"
+                                when "list"
+                                        method = "get"
+                                        path = "/#{name}s"
+                                when 'edit'
+                                        method = 'get'
+                                        path = "/#{name}/:${name}_id/edit"
+                                when 'update'
+                                        method = 'put'
+                                        path = "/#{name}/:${name}_id"
+                                when 'create'
+                                        method = 'post'
+                                        path = "/{#name}"
+                                when 'index'
+                                        method = 'get'
+                                        path = '/'
+                                else
+                                        throw new Error "Unrecognized route: #{name}.#{key}"
+                        path = @prefix + path
+                        console.log "#{@path}: handler #{method}(#{path}) -> #{typeof(@obj[key])}"
+                        @app[method] path, @obj[key]
+                @parent.use @app
+
 class ksApp
+        subapps: {}
+
         constructor: (@ks) ->
                 @config = coffee.helpers.merge defaultConfig, @ks.config
                 @config.locals = coffee.helpers.merge defaultConfig.locals, @config.locals
@@ -61,6 +109,12 @@ class ksApp
                         req.session.error = "Access denied !"
                         res.redirect "/login"
 
+        autodiscover: (dir) =>
+                fs.readdirSync(dir).forEach (name) =>
+                        if dir[0] != '/'
+                                dir = "#{@config.dirname}/#{dir}"
+                        @subapps["#{dir}/#{name}"] = new ksSubApp dir, name, @
+
         ksAppConfigure: =>
                 for dir in @config.dirs
                         pathname = "#{dir}/views"
@@ -76,7 +130,6 @@ class ksApp
                         sess.messages = sess.messages || {}
                         sess.messages[type] = sess.messages[type] || []
                         sess.messages[type].push msg
-                        console.log sess.messages
                         return @
 
                 if @config.viewOptions.pretty
