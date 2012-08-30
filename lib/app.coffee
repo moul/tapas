@@ -34,7 +34,9 @@ defaultConfig =
                 css_libraries: []
                 js_libraries: []
                 use: {
-                        bootstrap: true
+                        bootstrap: {
+                                fixedNavbar: true
+                                }
                 }
                 regions: {
                         navbarItems: { '/': 'Home', '/user': 'User' }
@@ -70,16 +72,16 @@ class ksSubApp
                         switch key
                                 when "show"
                                         method = 'get'
-                                        pathname = "/#{name}/:${name}_id"
+                                        pathname = "/#{name}/:#{name}_id"
                                 when "list"
                                         method = "get"
                                         pathname = "/#{name}s"
                                 when 'edit'
                                         method = 'get'
-                                        pathname = "/#{name}/:${name}_id/edit"
+                                        pathname = "/#{name}/:#{name}_id/edit"
                                 when 'update'
                                         method = 'put'
-                                        pathname = "/#{name}/:${name}_id"
+                                        pathname = "/#{name}/:#{name}_id"
                                 when 'create'
                                         method = 'post'
                                         pathname = "/{#name}"
@@ -92,7 +94,7 @@ class ksSubApp
                         console.log "#{@pathname}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
                         @app[method] pathname, @obj[key]
                 @parent.use @app
-
+                @app.locals = @parent.config.locals
 #class ksExtendsJadeFilter extends jade.Compiler
         #@__proto__ = jade.Compiler.prototype
 #        @visitTag = (node) ->
@@ -194,7 +196,7 @@ class ksApp
                         return @
 
                 if @config.viewOptions.pretty
-                        @app.locals.pretty = true
+                        @config.locals.pretty = true
                 for dir in @config.dirs
                         pathname = "#{dir}/public/favicon.ico"
                         if exists(pathname)
@@ -264,19 +266,18 @@ class ksApp
 
                 # TODO: auto-compile coffee
 
-                @app.locals = @config.locals
-
                 for dir in @config.dirs
                         @use express.static("#{dir}/public", { maxAge: @config.staticMaxAge * 1000 })
 
                 @configure 'development', =>
                         @use express.errorHandler()
-                        @app.locals.pretty = true
+                        @config.locals.pretty = true
 
                 @configure 'production', =>
                         if @config.compress
                                 console.log "TODO: compress gzip"
                                 #@use gzippo.staticGzip....
+                @app.locals = @config.locals
 
 
         run: =>

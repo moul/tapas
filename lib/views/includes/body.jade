@@ -1,24 +1,30 @@
 block header
-  #header.navbar.navbar-inverse(class=use.bootstrap && use.bootstrap.navbarFixed && '.navbar-fixed-top' || '')
+  #header.navbar.navbar-inverse(class=use.bootstrap && use.bootstrap.fixedNavbar && 'navbar-fixed-top' || '')
     .navbar-inner
-      .container-fluid
+      div(class=use.bootstrap.fluid && 'container-fluid' || 'container')
         a.btn.btn-navbar(data-toggle="collapse", data-target=".nav-collapse")
           span.icon-bar
           span.icon-bar
           span.icon-bar
         a.brand(href="/")= site_name
         .nav-collapse.collapse
-          .navbar-text.pull-right
-            | Logged in as 
-            a.navbar-link(href="/user/42") Username
           if regions.navbarItems
             ul.nav
               - for item, path in regions.navbarItems
                 li(class=path == current && 'active')
                   a(href=path)= item
+          if true
+            form.navbar-form.pull-right
+              input.span2(type="text", placeholder="Email")
+              input.span2(type="password", placeholder="Password")
+              button.btn(type="submit") Sign in
+          else
+            .navbar-text.pull-right
+              | Logged in as 
+              a.navbar-link(href="/user/42") Username
 block page
-  #page.container-fluid
-    .row-fluid
+  #page(class=use.bootstrap.fluid && 'container-fluid' || 'container')
+    div(class=use.bootstrap.fluid && 'row-fluid' || 'row')
       .span3
         .well.sidebar-nav
           ul.nav.nav-list
@@ -35,38 +41,14 @@ block page
       .span9
         .hero-unit
           h1.page-title= title
+          include messages
           block content
             p Lorem Ipsum
             p: a.btn.btn-primary.btn-large Learn more &raquo;
-        .row-fluid
-          .span4
-            h2 Heading
-            p Lorem Ipsum
-          .span4
-            h2 Heading
-            p Lorem Ipsum
-          .span4
-            h2 Heading
-            p Lorem Ipsum
-        .row-fluid
-          .span4
-            h2 Heading
-            p Lorem Ipsum
-          .span4
-            h2 Heading
-            p Lorem Ipsum
-          .span4
-            h2 Heading
-            p Lorem Ipsum
 block footer
   hr
-  footer.footer
+  footer#footer.footer
     .container
       p.pull-right
         a(href="#") Back to top
-      p Copyright
-      ul.footer-links
-        li
-          a(href="http://www.google.com/") Google
-        li
-          a(href="http://www.free.fr/") Free
+      p Copyright 2012
