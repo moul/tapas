@@ -1,0 +1,12 @@
+extends layout
+
+div.error
+  block content
+    div.error-message
+    block error_message
+      p error message
+
+    if print_errors
+      div.error-details
+      block error_details
+        p error details

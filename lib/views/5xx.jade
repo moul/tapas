@@ -1,5 +1,17 @@
-extends layout
+extends errors
 
-block content
-  h1 500: Internal Server Error
+block error_message
   p Looks like something blew up!
+
+block error_details
+  table
+    for value, key in error
+      tr
+        td= key
+        td= value
+    tr
+      td error
+      td: pre= error
+    tr
+      td stack
+      td: pre= stack

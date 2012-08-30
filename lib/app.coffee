@@ -1,15 +1,20 @@
 http =          require 'http'
 express =       require 'express'
+express_View =  require 'express/lib/view'
+express_Utils = require 'express/lib/utils'
 coffee =        require 'coffee-script'
 path =          require 'path'
 fs =            require 'fs'
 connect =       require 'connect'
 utils =         require './utils'
+jade =          require 'jade'
+stylus =        require 'stylus'
 exists =        fs.existsSync || path.existsSync
 defaultConfig =
         dirname: process.cwd() || __dirname
         dirs: [process.cwd(), __dirname]
         port: 3000
+        debug: true
         cookie_secret: null
         session_secret: null
         session: true
@@ -20,33 +25,44 @@ defaultConfig =
         cache: true
         viewEngine: 'jade' #hjs
         staticMaxAge: 86400
+        use:
+                bootstrap: true
         locals:
                 title: 'Kickstart2'
                 site_name: 'Kickstart2'
                 description: ""
+                css_libraries: []
+                js_libraries: []
+                use: {
+                        bootstrap: true
+                }
+                regions: {
+                        navbarItems: { '/': 'Home', '/user': 'User' }
+                }
         viewOptions:
                 layout: false
                 pretty: false
                 complexNames: true
-        template:
-                useBootstrap: true
         ksAppConfigure: true
 
 class ksSubApp
         constructor: (@dir, name, @parent) ->
-                @path = "#{@dir}/#{name}"
-                console.log "#{@path}: autodiscovering"
-                @obj = require "#{@path}"
+                @pathname = "#{@dir}/#{name}"
+                console.log "#{@pathname}: autodiscovering"
+                @obj = require "#{@pathname}"
                 @name = @obj.name || name
                 @prefix = @obj.prefix || ''
                 @app = express()
                 if @obj.engine
                         @app.set 'view engine', @obj.engine
-                @app.set 'views', "#{@path}/views"
+                #@dirs = [@pathname].concat @parent.config.dirs[..]
+                @dirs = @parent.config.dirs[..]
+                @app.set 'views', ["#{dir}/views" for dir in @dirs][0]
+
                 if @obj.before
-                        for path in  ["/#{name}/:#{name}_id", "/#{name}/:#{name}_id/*"]
-                                @app.all path, @obj.before
-                                console.log "#{@path}: ALL #{path} -> before"
+                        for pathname in  ["/#{name}/:#{name}_id", "/#{name}/:#{name}_id/*"]
+                                @app.all pathname, @obj.before
+                                console.log "#{@pathname}: ALL #{pathname} -> before"
 
                 for key of @obj
                         if ~['name', 'prefix', 'engine', 'before'].indexOf(key)
@@ -54,28 +70,37 @@ class ksSubApp
                         switch key
                                 when "show"
                                         method = 'get'
-                                        path = "/#{name}/:${name}_id"
+                                        pathname = "/#{name}/:${name}_id"
                                 when "list"
                                         method = "get"
-                                        path = "/#{name}s"
+                                        pathname = "/#{name}s"
                                 when 'edit'
                                         method = 'get'
-                                        path = "/#{name}/:${name}_id/edit"
+                                        pathname = "/#{name}/:${name}_id/edit"
                                 when 'update'
                                         method = 'put'
-                                        path = "/#{name}/:${name}_id"
+                                        pathname = "/#{name}/:${name}_id"
                                 when 'create'
                                         method = 'post'
-                                        path = "/{#name}"
+                                        pathname = "/{#name}"
                                 when 'index'
                                         method = 'get'
-                                        path = '/'
+                                        pathname = '/'
                                 else
                                         throw new Error "Unrecognized route: #{name}.#{key}"
-                        path = @prefix + path
-                        console.log "#{@path}: handler #{method}(#{path}) -> #{typeof(@obj[key])}"
-                        @app[method] path, @obj[key]
+                        pathname = @prefix + pathname
+                        console.log "#{@pathname}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
+                        @app[method] pathname, @obj[key]
                 @parent.use @app
+
+#class ksExtendsJadeFilter extends jade.Compiler
+        #@__proto__ = jade.Compiler.prototype
+#        @visitTag = (node) ->
+#                parent = Compiler::visitTag
+#                console.log '=========='
+#                console.dir node
+
+
 
 class ksApp
         subapps: {}
@@ -83,6 +108,7 @@ class ksApp
         constructor: (@ks) ->
                 @config = coffee.helpers.merge defaultConfig, @ks.config
                 @config.locals = coffee.helpers.merge defaultConfig.locals, @config.locals
+                @config.locals.print_errors = @config.debug
                 @process = process
                 do @ksAppInit
                 if @config.ksAppConfigure
@@ -116,11 +142,46 @@ class ksApp
                         @subapps["#{dir}/#{name}"] = new ksSubApp dir, name, @
 
         ksAppConfigure: =>
-                for dir in @config.dirs
-                        pathname = "#{dir}/views"
-                        if exists(pathname)
-                                @set 'views', pathname
-                                break
+                # override parseExtends
+                # OU
+                # ajouter un filter smartExtends
+
+                console.dir jade.filtesr
+                jade.filters.testManfred = (block, compiler) ->
+                        new ksExtendsJadeFilter block, compiler.options
+
+                @set 'views', ["#{dir}/views" for dir in @config.dirs][0]
+                # multiple views
+                lookupProxy = express_View::lookup
+                lookupProxy = (pathname) ->
+                        ext = @ext
+
+                        console.log 'path1', pathname
+                        if !express_Utils.isAbsolute pathname
+                                pathname = path.join @root, pathname
+                        console.log 'path2', pathname
+                        if exists pathname
+                                return pathname
+
+                        pathname = path.join(path.dirname(pathname), path.basename(pathname, ext), 'index' + ext)
+                        if exists pathname
+                                return pathname
+
+                express_View::lookup = (pathname) ->
+                        if @root instanceof Array
+                                roots = @root[..]
+                                matchedView = null
+                                for root in roots
+                                        console.log "ROOT", root
+                                        console.info "roots", roots
+                                        @root = root
+                                        matchedView = lookupProxy.call @, pathname
+                                        if matchedView
+                                                break
+                                @root = roots
+                                return matchedView
+                        return lookupProxy.call @, pathname
+
                 @set 'view options', @config.viewOptions
                 @set 'view engine', @config.viewEngine
 
@@ -157,6 +218,9 @@ class ksApp
                                 req.session.messages = {}
                                 do next
 
+                @use (req, res, next) ->
+                        res.locals.current = req.url
+                        do next
                 # TODO: @use extras.fixIP ['x-forwarded-for', 'forwarded-for', 'x-cluster-ip']
 
 
@@ -176,11 +240,10 @@ class ksApp
                 #                return 'salut'
 
                 if @config.stylus
-                        stylus = require 'stylus'
                         image_paths = "#{dir}/public/images" for dir in @config.dirs
                         for dir in @config.dirs
                                 @use stylus.middleware
-                                        debug: true
+                                        debug: @config.debug
                                         src: "#{dir}/public"
                                         dest: "#{dir}/public"
                                         compile: (str, path) ->
@@ -217,11 +280,14 @@ class ksApp
 
 
         run: =>
-                @app.use (err, req, res, next) ->
-                        if ~err.message.indexOf 'not found'
-                                return next()
-                        console.error err.stack
-                        res.status(500).render('5xx')
+                if true
+                        @app.use (err, req, res, next) ->
+                                if ~err.message.indexOf 'not found'
+                                        return next()
+                                console.log 'error, err.stack'
+                                console.error err.stack
+                                console.dir err
+                                res.status(500).render('5xx', {title: "500: Internal Server Error", error: err, stack: err.stack})
                 @app.use (req, res, next) ->
                         res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
 
