@@ -33,14 +33,13 @@ defaultConfig =
                 description: ""
                 css_libraries: []
                 js_libraries: []
-                use: {
-                        bootstrap: {
+                use:
+                        bootstrap:
+                                responsive: true
                                 fixedNavbar: true
-                                }
-                }
-                regions: {
+                                fluid: true
+                regions:
                         navbarItems: { '/': 'Home', '/user': 'User' }
-                }
         viewOptions:
                 layout: false
                 pretty: false
@@ -48,23 +47,27 @@ defaultConfig =
         ksAppConfigure: true
 
 class ksSubApp
-        constructor: (@dir, name, @parent) ->
-                @pathname = "#{@dir}/#{name}"
-                console.log "#{@pathname}: autodiscovering"
-                @obj = require "#{@pathname}"
-                @name = @obj.name || name
-                @prefix = @obj.prefix || ''
+        constructor: (@dir, name, parent) ->
+                @config = coffee.helpers.merge {}, parent.config
+                @config.sub =
+                        parent: parent
+                        path: "#{@dir}/#{name}"
+                console.log "#{@config.sub.path}: autodiscovering"
+                @obj = require "#{@config.sub.path}"
+                @config.sub.name = @obj.name || name
+                @config.sub.prefix = @obj.prefix || ''
+                @config.locals.config = @config
+                @config.locals.sub = @config.sub
                 @app = express()
                 if @obj.engine
                         @app.set 'view engine', @obj.engine
-                #@dirs = [@pathname].concat @parent.config.dirs[..]
-                @dirs = @parent.config.dirs[..]
-                @app.set 'views', ["#{dir}/views" for dir in @dirs][0]
+                @config.locals.dirs = @config.dirs = [@config.sub.path].concat @config.dirs[..]
+                @app.set 'views', ["#{dir}/views" for dir in @config.dirs][0]
 
                 if @obj.before
                         for pathname in  ["/#{name}/:#{name}_id", "/#{name}/:#{name}_id/*"]
                                 @app.all pathname, @obj.before
-                                console.log "#{@pathname}: ALL #{pathname} -> before"
+                                console.log "#{@config.sub.path}: ALL #{pathname} -> before"
 
                 for key of @obj
                         if ~['name', 'prefix', 'engine', 'before'].indexOf(key)
@@ -90,11 +93,11 @@ class ksSubApp
                                         pathname = '/'
                                 else
                                         throw new Error "Unrecognized route: #{name}.#{key}"
-                        pathname = @prefix + pathname
-                        console.log "#{@pathname}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
+                        pathname = @config.sub.prefix + pathname
+                        console.log "#{@config.sub.path}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
                         @app[method] pathname, @obj[key]
-                @parent.use @app
-                @app.locals = @parent.config.locals
+                @app.locals = @config.locals
+                parent.use @app
 #class ksExtendsJadeFilter extends jade.Compiler
         #@__proto__ = jade.Compiler.prototype
 #        @visitTag = (node) ->
@@ -148,7 +151,26 @@ class ksApp
                 # OU
                 # ajouter un filter smartExtends
 
-                console.dir jade.filtesr
+                console.dir jade.filters
+                jade.Parser.prototype.parseExtends = () ->
+                        path = require 'path'
+                        fs = require 'fs'
+                        if not @filename
+                                throw new Error 'the "filename" option is required to extend templates'
+                        shortpath = @expect('extends').val.trim()
+                        dirs = "#{dir}/views" for dir in @options.dirs
+                        dirs = [path.dirname @filename].concat dirs
+                        for dir in dirs
+                                pathname = path.join dir, "#{shortpath}.jade"
+                                if exists pathname
+                                        break
+                        str = fs.readFileSync pathname, 'utf8'
+                        parser = new jade.Parser str, pathname, @options
+                        parser.blocks = @blocks
+                        parser.contexts = @contexts
+                        @extending = parser
+                        new jade.nodes.Literal ''
+
                 jade.filters.testManfred = (block, compiler) ->
                         new ksExtendsJadeFilter block, compiler.options
 
