@@ -65,9 +65,9 @@ class ksSubApp
                 @app.set 'views', ["#{dir}/views" for dir in @config.dirs][0]
 
                 if @obj.before
-                        for pathname in  ["/#{name}/:#{name}_id", "/#{name}/:#{name}_id/*"]
-                                @app.all pathname, @obj.before
-                                console.log "#{@config.sub.path}: ALL #{pathname} -> before"
+                        for pathname in  ["/#{@config.sub.name}/:#{@config.sub.name}_id", "/#{@config.sub.name}/:#{@config.sub.name}_id/*"]
+                                @app.all "#{@config.sub.prefix}#{pathname}", @obj.before
+                                console.log "#{@config.sub.prefix}#{pathname}: ALL #{pathname} -> before"
 
                 for key of @obj
                         if ~['name', 'prefix', 'engine', 'before'].indexOf(key)
@@ -75,24 +75,24 @@ class ksSubApp
                         switch key
                                 when "show"
                                         method = 'get'
-                                        pathname = "/#{name}/:#{name}_id"
+                                        pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                                 when "list"
                                         method = "get"
-                                        pathname = "/#{name}s"
+                                        pathname = "/#{@config.sub.name}s"
                                 when 'edit'
                                         method = 'get'
-                                        pathname = "/#{name}/:#{name}_id/edit"
+                                        pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id/edit"
                                 when 'update'
                                         method = 'put'
-                                        pathname = "/#{name}/:#{name}_id"
+                                        pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                                 when 'create'
                                         method = 'post'
-                                        pathname = "/{#name}"
+                                        pathname = "/{#@config.sub.name}"
                                 when 'index'
                                         method = 'get'
                                         pathname = '/'
                                 else
-                                        throw new Error "Unrecognized route: #{name}.#{key}"
+                                        throw new Error "Unrecognized route: #{@config.sub.name}.#{key}"
                         pathname = @config.sub.prefix + pathname
                         console.log "#{@config.sub.path}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
                         @app[method] pathname, @obj[key]
@@ -151,7 +151,6 @@ class ksApp
                 # OU
                 # ajouter un filter smartExtends
 
-                console.dir jade.filters
                 jade.Parser.prototype.parseExtends = () ->
                         path = require 'path'
                         fs = require 'fs'
@@ -179,14 +178,10 @@ class ksApp
                 lookupProxy = express_View::lookup
                 lookupProxy = (pathname) ->
                         ext = @ext
-
-                        console.log 'path1', pathname
                         if !express_Utils.isAbsolute pathname
                                 pathname = path.join @root, pathname
-                        console.log 'path2', pathname
                         if exists pathname
                                 return pathname
-
                         pathname = path.join(path.dirname(pathname), path.basename(pathname, ext), 'index' + ext)
                         if exists pathname
                                 return pathname
@@ -196,8 +191,6 @@ class ksApp
                                 roots = @root[..]
                                 matchedView = null
                                 for root in roots
-                                        console.log "ROOT", root
-                                        console.info "roots", roots
                                         @root = root
                                         matchedView = lookupProxy.call @, pathname
                                         if matchedView
@@ -210,7 +203,7 @@ class ksApp
                 @set 'view engine', @config.viewEngine
 
                 # res.message 'status message'
-                @app.response.message = (msg, type = 'default') ->
+                @app.response.message = (msg, type = 'info') ->
                         sess = @req.session
                         sess.messages = sess.messages || {}
                         sess.messages[type] = sess.messages[type] || []

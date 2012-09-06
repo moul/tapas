@@ -40,7 +40,8 @@ block page
             li: a(href="#") Link
       .span9
         .hero-unit
-          h1.page-title= title
+          block title
+            h1.page-title= title
           include messages
           block content
             p Lorem Ipsum
