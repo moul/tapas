@@ -1,3 +1,4 @@
+- grid.content = grid.size - ((!!regions.left || !!menus.left) * grid.left) - ((!!regions.right || !!menus.right) * grid.right)
 block header
   #header.navbar.navbar-inverse(class=use.bootstrap && use.bootstrap.fixedNavbar && 'navbar-fixed-top' || '')
     .navbar-inner
@@ -8,9 +9,9 @@ block header
           span.icon-bar
         a.brand(href="/")= site_name
         .nav-collapse.collapse
-          if regions.navbarItems
+          if regions.navbarLinks
             ul.nav
-              - for item, path in regions.navbarItems
+              - for item, path in regions.navbarLinks
                 li(class=path == current && 'active')
                   a(href=path)= item
           if true
@@ -25,20 +26,21 @@ block header
 block page
   #page(class=use.bootstrap.fluid && 'container-fluid' || 'container')
     div(class=use.bootstrap.fluid && 'row-fluid' || 'row')
-      .span3
-        .well.sidebar-nav
-          ul.nav.nav-list
-            li.nav-header Sidebar
-            li.active: a(href="#") Link
-            li: a(href="#") Link
-            li: a(href="#") Link
-            li: a(href="#") Link
-            li.nav-header Sidebar
-            li: a(href="#") Link
-            li: a(href="#") Link
-            li: a(href="#") Link
-            li: a(href="#") Link
-      .span9
+      if menus.left || regions.left
+        div(class=classes.left, class="span#{grid.left}")
+          if menus.left
+            .well.menu
+              ul.nav.nav-list
+                for link, path in menus.left
+                  li(class=(link.childrens && 'nav-header'))
+                    //- li.nav-header= category
+                    a(href=path, class=(path == current && 'active'))= link.title
+                    if link.childrens
+                      ul
+                      for childLink, childPath in link.childrens
+                        li
+                          a(href=childPath, class=(childPath == current && 'active'))= childLink.title
+      div(class=classes.content, class="span#{grid.content}")
         .hero-unit
           block title
             h1.page-title= title
@@ -46,10 +48,12 @@ block page
           block content
             p Lorem Ipsum
             p: a.btn.btn-primary.btn-large Learn more &raquo;
+      if menus.right || regions.right
+        div(class=classes.right)
 block footer
-  hr
-  footer#footer.footer
-    .container
-      p.pull-right
-        a(href="#") Back to top
-      p Copyright 2012
+  if regions.footer
+    hr
+    footer#footer.footer
+      .container
+        - for content, className in regions.footer
+          div(class=className)!= content

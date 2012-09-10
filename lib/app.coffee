@@ -38,17 +38,59 @@ defaultConfig =
                                 responsive: true
                                 fixedNavbar: true
                                 fluid: true
+                menus:
+                        navbar:
+                                '/':
+                                        title: 'Home'
+                        primary:
+                                '/':
+                                        title: 'Home'
+                                '/login':
+                                        title: 'Login'
+                                '/register':
+                                        title: 'Register'
+                                '/logout':
+                                        title: 'Logout'
                 regions:
-                        navbarItems: { '/': 'Home', '/user': 'User' }
+                        #left:
+                        #navbar:
+                        #content:
+                        #left:
+                        #right:
+                        right:
+                                'salut': 'salut'
+                        footer:
+                                'copyright': '<p>Copyright 2012</p>'
+                                'backToTop': '<p class="pull-right"><a href="#">Back to top</a></p>'
+                grid:
+                        size: 12
+                        content: 12
+                        left: 3
+                        right: 3
+                classes:
+                        content: []
+                        left: []
+                        right: []
         viewOptions:
                 layout: false
                 pretty: false
                 complexNames: true
         ksAppConfigure: true
 
+deepExtend = (object, extenders...) ->
+        return {} if not object?
+        for other in extenders
+                for own key, val of other
+                        if not object[key]? or typeof val isnt "object"
+                                object[key] = val
+                        else
+                                object[key] = deepExtend object[key], val
+        object
+
 class ksSubApp
         constructor: (@dir, name, parent) ->
-                @config = coffee.helpers.merge {}, parent.config
+                #@config = coffee.helpers.merge {}, parent.config
+                @config = deepExtend {}, parent.config
                 @config.sub =
                         parent: parent
                         path: "#{@dir}/#{name}"
@@ -69,8 +111,11 @@ class ksSubApp
                                 @app.all "#{@config.sub.prefix}#{pathname}", @obj.before
                                 console.log "#{@config.sub.prefix}#{pathname}: ALL #{pathname} -> before"
 
+                if @obj.locals
+                        deepExtend @config.locals, @obj.locals
+
                 for key of @obj
-                        if ~['name', 'prefix', 'engine', 'before'].indexOf(key)
+                        if ~['name', 'prefix', 'engine', 'before', 'locals'].indexOf key
                                 continue
                         switch key
                                 when "show"
@@ -92,7 +137,8 @@ class ksSubApp
                                         method = 'get'
                                         pathname = '/'
                                 else
-                                        throw new Error "Unrecognized route: #{@config.sub.name}.#{key}"
+                                        console.error "Unrecognized route: #{@config.sub.name}.#{key}"
+                                        #throw new Error "Unrecognized route: #{@config.sub.name}.#{key}"
                         pathname = @config.sub.prefix + pathname
                         console.log "#{@config.sub.path}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
                         @app[method] pathname, @obj[key]
