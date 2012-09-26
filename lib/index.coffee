@@ -13,4 +13,7 @@ class Kickstart2
         worker: () =>
                 require('./worker') @
 
+
+
 module.exports = Kickstart2.create
+module.exports.utils = require('./utils')

@@ -6,101 +6,29 @@ coffee =        require 'coffee-script'
 path =          require 'path'
 fs =            require 'fs'
 connect =       require 'connect'
-utils =         require './utils'
 jade =          require 'jade'
 stylus =        require 'stylus'
+nib =           require 'nib'
+utils =         require './utils'
 exists =        fs.existsSync || path.existsSync
-defaultConfig =
-        dirname: process.cwd() || __dirname
-        dirs: [process.cwd(), __dirname]
-        port: 3000
-        debug: true
-        cookie_secret: null
-        session_secret: null
-        session: true
-        cookie: true
-        stylus: true
-        less: false
-        compress: true
-        cache: true
-        viewEngine: 'jade' #hjs
-        staticMaxAge: 86400
-        use:
-                bootstrap: true
-        locals:
-                title: 'Kickstart2'
-                site_name: 'Kickstart2'
-                description: ""
-                css_libraries: []
-                js_libraries: []
-                use:
-                        bootstrap:
-                                responsive: true
-                                fixedNavbar: true
-                                fluid: true
-                menus:
-                        navbar:
-                                '/':
-                                        title: 'Home'
-                        primary:
-                                '/':
-                                        title: 'Home'
-                                '/login':
-                                        title: 'Login'
-                                '/register':
-                                        title: 'Register'
-                                '/logout':
-                                        title: 'Logout'
-                regions:
-                        #left:
-                        #navbar:
-                        #content:
-                        #left:
-                        #right:
-                        right:
-                                'salut': 'salut'
-                        footer:
-                                'copyright': '<p>Copyright 2012</p>'
-                                'backToTop': '<p class="pull-right"><a href="#">Back to top</a></p>'
-                grid:
-                        size: 12
-                        content: 12
-                        left: 3
-                        right: 3
-                classes:
-                        content: []
-                        left: []
-                        right: []
-        viewOptions:
-                layout: false
-                pretty: false
-                complexNames: true
-        ksAppConfigure: true
 
-deepExtend = (object, extenders...) ->
-        return {} if not object?
-        for other in extenders
-                for own key, val of other
-                        if not object[key]? or typeof val isnt "object"
-                                object[key] = val
-                        else
-                                object[key] = deepExtend object[key], val
-        object
+defaultConfig = require './defaultConfig'
 
 class ksSubApp
         constructor: (@dir, name, parent) ->
                 #@config = coffee.helpers.merge {}, parent.config
-                @config = deepExtend {}, parent.config
+                @config = utils.deepExtend {}, parent.config
                 @config.sub =
                         parent: parent
                         path: "#{@dir}/#{name}"
                 console.log "#{@config.sub.path}: autodiscovering"
+                parent.setupPublic "#{@config.sub.path}"
                 @obj = require "#{@config.sub.path}"
                 @config.sub.name = @obj.name || name
                 @config.sub.prefix = @obj.prefix || ''
                 @config.locals.config = @config
                 @config.locals.sub = @config.sub
-                @app = express()
+                @app = do express
                 if @obj.engine
                         @app.set 'view engine', @obj.engine
                 @config.locals.dirs = @config.dirs = [@config.sub.path].concat @config.dirs[..]
@@ -112,18 +40,24 @@ class ksSubApp
                                 console.log "#{@config.sub.prefix}#{pathname}: ALL #{pathname} -> before"
 
                 if @obj.locals
-                        deepExtend @config.locals, @obj.locals
+                        utils.deepExtend @config.locals, @obj.locals
 
                 for key of @obj
-                        if ~['name', 'prefix', 'engine', 'before', 'locals'].indexOf key
+                        if ~['name', 'prefix', 'engine', 'before', 'locals', 'custom'].indexOf key
                                 continue
                         switch key
+                                when "show_json"
+                                        method = 'get'
+                                        pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id/json"
                                 when "show"
                                         method = 'get'
                                         pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                                 when "list"
                                         method = "get"
                                         pathname = "/#{@config.sub.name}s"
+                                when "list_json"
+                                        method = "get"
+                                        pathname = "/#{@config.sub.name}s/json"
                                 when 'edit'
                                         method = 'get'
                                         pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id/edit"
@@ -142,7 +76,17 @@ class ksSubApp
                         pathname = @config.sub.prefix + pathname
                         console.log "#{@config.sub.path}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
                         @app[method] pathname, @obj[key]
+                if @obj.custom?
+                        for entry in @obj.custom
+                                utils.deepExtend entry, {
+                                        method: 'get'
+                                        path: null
+                                        callback: null
+                                        }
+                                console.log "#{@config.sub.path}: custom handler #{entry.method}(#{entry.path} -> #{typeof(entry.callback)})"
+                                @app[entry.method] entry.path, entry.callback
                 @app.locals = @config.locals
+                #@app.use express.compiler { src: "#{@config.sub.path}/public", enable: ["coffeescript"] }
                 parent.use @app
 #class ksExtendsJadeFilter extends jade.Compiler
         #@__proto__ = jade.Compiler.prototype
@@ -160,6 +104,7 @@ class ksApp
                 @config = coffee.helpers.merge defaultConfig, @ks.config
                 @config.locals = coffee.helpers.merge defaultConfig.locals, @config.locals
                 @config.locals.print_errors = @config.debug
+                @config.locals.dirs = @config.dirs
                 @process = process
                 do @ksAppInit
                 if @config.ksAppConfigure
@@ -169,7 +114,7 @@ class ksApp
                 return new ksApp(ks)
 
         ksAppInit: =>
-                @app = express()
+                @app = do express
 
         # wrappers
         use: =>         @app.use.apply(@app, arguments)
@@ -197,7 +142,7 @@ class ksApp
                 # OU
                 # ajouter un filter smartExtends
 
-                jade.Parser.prototype.parseExtends = () ->
+                require('jade').Parser.prototype.parseExtends = ->
                         path = require 'path'
                         fs = require 'fs'
                         if not @filename
@@ -267,8 +212,12 @@ class ksApp
                 @use express.bodyParser()
                 @use express.methodOverride()
 
+                for dir in @config.dirs
+                        @setupPublic dir
+
                 if @config.session or @config.cookie
                         @use express.cookieParser(@config.cookie_secret || utils.uniqueId(12))
+
                 if @config.session
                         @use express.session(@config.session_secret || utils.uniqueId(12))
 
@@ -284,8 +233,8 @@ class ksApp
                 @use (req, res, next) ->
                         res.locals.current = req.url
                         do next
-                # TODO: @use extras.fixIP ['x-forwarded-for', 'forwarded-for', 'x-cluster-ip']
 
+                # TODO: @use extras.fixIP ['x-forwarded-for', 'forwarded-for', 'x-cluster-ip']
 
                 # TODO: faire un @use qui ajoute des valeurs globales (title, options)
                 # TODO: ajouter express-extras
@@ -302,22 +251,6 @@ class ksApp
                 #        bli: (req) ->
                 #                return 'salut'
 
-                if @config.stylus
-                        image_paths = "#{dir}/public/images" for dir in @config.dirs
-                        for dir in @config.dirs
-                                @use stylus.middleware
-                                        debug: @config.debug
-                                        src: "#{dir}/public"
-                                        dest: "#{dir}/public"
-                                        compile: (str, path) ->
-                                                s = stylus str
-                                                s.set 'filename', path
-                                                s.set 'warn', true
-                                                s.set 'compress', true
-                                                s.define 'img', stylus.url
-                                                        paths: image_paths
-                                                        limit: 1000000
-                                                return s
 
                 #if config.cache
                 #        @use express.staticCache()
@@ -326,9 +259,6 @@ class ksApp
                         @use express.compress()
 
                 # TODO: auto-compile coffee
-
-                for dir in @config.dirs
-                        @use express.static("#{dir}/public", { maxAge: @config.staticMaxAge * 1000 })
 
                 @configure 'development', =>
                         @use express.errorHandler()
@@ -340,6 +270,28 @@ class ksApp
                                 #@use gzippo.staticGzip....
                 @app.locals = @config.locals
 
+        setupPublic: (dir) =>
+                @use express.static("#{dir}/public", { maxAge: @config.staticMaxAge * 1000 })
+                if @config.stylus
+                        console.log "setup public: #{dir}/public"
+                        image_paths = "#{dir}/public/images" for dir in @config.dirs
+                        @use stylus.middleware
+                                debug: @config.debug
+                                src: "#{dir}/public"
+                                dest: "#{dir}/public"
+                                #force: true
+                                compile: (str, path, fn) ->
+                                        s = stylus str
+                                        s.set 'filename', path
+                                        s.set 'warn', true
+                                        s.set 'compress', true
+                                        #s.use do nib
+                                        s.define 'img', stylus.url
+                                                paths: image_paths
+                                                limit: 1000000
+                                        if fn?
+                                                s.render fn
+                                        return s
 
         run: =>
                 if true
