@@ -9,9 +9,9 @@ connect =       require 'connect'
 jade =          require 'jade'
 stylus =        require 'stylus'
 nib =           require 'nib'
+io =            require 'socket.io'
 utils =         require './utils'
 exists =        fs.existsSync || path.existsSync
-
 defaultConfig = require './defaultConfig'
 
 class ksSubApp
@@ -115,6 +115,8 @@ class ksApp
 
         ksAppInit: =>
                 @app = do express
+                @http = http.createServer @app
+                @io = io.listen @http
 
         # wrappers
         use: =>         @app.use.apply(@app, arguments)
@@ -305,7 +307,6 @@ class ksApp
                 @app.use (req, res, next) ->
                         res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
 
-                @http = http.createServer @app
                 port = @process.env.PORT || @config.port
                 @http.listen port, -> console.log "Express server listening on port #{port}"
 
