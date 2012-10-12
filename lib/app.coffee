@@ -13,6 +13,7 @@ io =            require 'socket.io'
 utils =         require './utils'
 exists =        fs.existsSync || path.existsSync
 defaultConfig = require './defaultConfig'
+log =           require 'socket.io/lib/logger'
 
 class ksSubApp
         constructor: (@dir, name, parent) ->
@@ -106,6 +107,7 @@ class ksApp
                 @config.locals.print_errors = @config.debug
                 @config.locals.dirs = @config.dirs
                 @process = process
+                @log = new (log)()
                 do @ksAppInit
                 if @config.ksAppConfigure
                         do @ksAppConfigure
@@ -116,7 +118,13 @@ class ksApp
         ksAppInit: =>
                 @app = do express
                 @http = http.createServer @app
+                #@io = null
                 @io = io.listen @http
+                @io.enable 'browser client minification'
+                @io.enable 'browser client etag'
+                @io.enable 'browser client gzip'
+                @io.set 'log level', 5
+
 
         # wrappers
         use: =>         @app.use.apply(@app, arguments)
@@ -308,6 +316,8 @@ class ksApp
                         res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
 
                 port = @process.env.PORT || @config.port
-                @http.listen port, -> console.log "Express server listening on port #{port}"
+                @http.listen port, -> console.log "Kickstart2 server listening on port #{port}"
+                process.on 'uncaughtException', @log.error.bind(@log)
+                @log.info 'Kickstart2 server started'
 
 module.exports = ksApp.create
