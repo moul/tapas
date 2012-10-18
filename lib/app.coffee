@@ -286,7 +286,7 @@ class ksApp
                 @app.locals = @config.locals
 
                 @app.get '/templates.js', (req, res) ->
-                        res.contentType 'templates.js'
+                        res.contentType 'application/javascript'
                         # TODO: aggregate multiple modules hogans !
                         for htr in hoganTemplateRenderers
                                 console.log htr
