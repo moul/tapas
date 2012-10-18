@@ -1,0 +1,43 @@
+block pageinner
+  if menus.left || regions.left
+    div.left(class=classes.left, class="span#{grid.left}")
+      if menus.left
+        .well.menu
+          ul.nav.nav-list
+            for link, path in menus.left
+              li(class=(link.childrens && 'nav-header'))
+                //- li.nav-header= category
+                a(href=path, class=(path == current && 'active'))= link.title
+                if link.childrens
+                  ul
+                  for childLink, childPath in link.childrens
+                    li
+                      a(href=childPath, class=(childPath == current && 'active'))= childLink.title
+      if regions.left
+        - for content, className in regions.left
+          div(class=className)!= content
+  div(class=classes.content, class="span#{grid.content}")
+    .hero-unit
+      block title
+        h1.page-title= title
+      include messages
+      block content
+        p Lorem Ipsum
+        p: a.btn.btn-primary.btn-large Learn more &raquo;
+  if menus.right || regions.right
+    div.right(class=classes.right, class="span#{grid.right}")
+      if menus.right
+        .well.menu
+          ul.nav.nav-list
+            for link, path in menus.right
+              li(class=(link.childrens && 'nav-header'))
+                //- li.nav-header= category
+                a(href=path, class=(path == current && 'active'))= link.title
+                if link.childrens
+                  ul
+                  for childLink, childPath in link.childrens
+                    li
+                      a(href=childPath, class=(childPath == current && 'active'))= childLink.title
+      if regions.right
+        - for content, className in regions.right
+          div(class=className)!= content

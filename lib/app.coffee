@@ -14,6 +14,11 @@ utils =         require './utils'
 exists =        fs.existsSync || path.existsSync
 defaultConfig = require './defaultConfig'
 log =           require 'socket.io/lib/logger'
+hogan =         require 'hogan.js'
+htc =           require 'hogan-template-compiler'
+
+hoganTemplateRenderers = []
+hoganCompilers = []
 
 class ksSubApp
         constructor: (@dir, name, parent) ->
@@ -280,11 +285,19 @@ class ksApp
                                 #@use gzippo.staticGzip....
                 @app.locals = @config.locals
 
+                @app.get '/templates.js', (req, res) ->
+                        res.contentType 'templates.js'
+                        # TODO: aggregate multiple modules hogans !
+                        for htr in hoganTemplateRenderers
+                                console.log htr
+                                res.send htr.getSharedTemplates()
+                                return
+                        res.write ';'
+
         setupPublic: (dir) =>
-                @use express.static("#{dir}/public", { maxAge: @config.staticMaxAge * 1000 })
                 if @config.stylus
                         console.log "setup public: #{dir}/public"
-                        image_paths = "#{dir}/public/images" for dir in @config.dirs
+                        image_paths = "#{_dir}/public/images" for _dir in @config.dirs
                         @use stylus.middleware
                                 debug: @config.debug
                                 src: "#{dir}/public"
@@ -303,7 +316,30 @@ class ksApp
                                                 s.render fn
                                         return s
 
+                if @config.hogan # && in development
+                        pathname = "#{dir}/public/partials"
+                        console.log "setup hogan: #{pathname}"
+                        if exists pathname
+                                hoganTemplateRenderer = htc
+                                        partialsDirectory: pathname
+                                        layoutsDirectory: pathname
+                                hoganTemplateRenderers.push hoganTemplateRenderer
+                                hoganCompilers.push
+                                        compile: (source, options) ->
+                                                template = hoganTemplateRenderer.getTemplate options.filename
+                                                return (locals) ->
+                                                        return template.render locals, hoganTemplateRenderer.getPartials()
+
+                @use express.static("#{dir}/public", { maxAge: @config.staticMaxAge * 1000 })
+
         run: =>
+                @configure 'development', =>
+                        @use (req, res, next) ->
+                                for htr in hoganTemplateRenderers
+                                        console.log htr
+                                        htr.read()
+                                next()
+
                 if true
                         @app.use (err, req, res, next) ->
                                 if ~err.message.indexOf 'not found'

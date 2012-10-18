@@ -8,6 +8,7 @@ module.exports =
         session: true
         cookie: true
         stylus: true
+        hogan: true
         less: false
         compress: true
         cache: true
