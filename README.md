@@ -1,4 +1,4 @@
-kickstart2
-==========
+Tapas
+=====
 
-Preconfigured Express environment with multiple modules. See http://github.com/moul/kickstart2 for usage
+Preconfigured Express environment with multiple modules and helpers. See http://github.com/moul/tapas for usage
