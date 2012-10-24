@@ -121,7 +121,7 @@ class ksApp
                 return new ksApp(ks)
 
         ksAppInit: =>
-                @app = do express
+                @express = @app = do express
                 @http = http.createServer @app
                 #@io = null
                 @io = io.listen @http
