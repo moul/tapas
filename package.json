@@ -15,7 +15,8 @@
     "jade": "",
     "nib": "",
     "hogan.js": "",
-    "hogan-template-compiler": ""
+    "hogan-template-compiler": "",
+    "connect-assets": ""
   },
   "devDependencies": {
     "coffee-script": "~1.3.3",
