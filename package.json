@@ -16,7 +16,12 @@
     "nib": "",
     "hogan.js": "",
     "hogan-template-compiler": "",
-    "connect-assets": ""
+    "connect-assets": "",
+    "coffee-script": "",
+    "stylus": "",
+    "nib": "",
+    "bootstrap-stylus": "",
+    "less": ""
   },
   "devDependencies": {
     "coffee-script": "~1.3.3",

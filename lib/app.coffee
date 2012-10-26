@@ -1,21 +1,22 @@
-http =          require 'http'
-express =       require 'express'
-express_View =  require 'express/lib/view'
-express_Utils = require 'express/lib/utils'
-coffee =        require 'coffee-script'
-path =          require 'path'
-fs =            require 'fs'
-connect =       require 'connect'
-jade =          require 'jade'
-stylus =        require 'stylus'
-nib =           require 'nib'
-io =            require 'socket.io'
-utils =         require './utils'
-exists =        fs.existsSync || path.existsSync
-defaultConfig = require './defaultConfig'
-log =           require 'socket.io/lib/logger'
-hogan =         require 'hogan.js'
-htc =           require 'hogan-template-compiler'
+http =           require 'http'
+express =        require 'express'
+express_View =   require 'express/lib/view'
+express_Utils =  require 'express/lib/utils'
+coffee =         require 'coffee-script'
+path =           require 'path'
+fs =             require 'fs'
+connect =        require 'connect'
+jade =           require 'jade'
+stylus =         require 'stylus'
+nib =            require 'nib'
+io =             require 'socket.io'
+utils =          require './utils'
+exists =         fs.existsSync || path.existsSync
+defaultConfig =  require './defaultConfig'
+log =            require 'socket.io/lib/logger'
+hogan =          require 'hogan.js'
+htc =            require 'hogan-template-compiler'
+connect_assets = require 'connect-assets'
 
 hoganTemplateRenderers = []
 hoganCompilers = []
@@ -218,11 +219,6 @@ class ksApp
 
                 if @config.viewOptions.pretty
                         @config.locals.pretty = true
-                for dir in @config.dirs
-                        pathname = "#{dir}/public/favicon.ico"
-                        if exists(pathname)
-                                @use express.favicon(pathname, { maxAge: @config.staticMaxAge * 1000 })
-                                break
                 @use express.logger('dev')
                 @use express.bodyParser()
                 @use express.methodOverride()
@@ -295,6 +291,19 @@ class ksApp
                         res.write ';'
 
         setupPublic: (dir) =>
+                parent_name = utils.getParentFolderName(dir, ["lib"])
+                @config.locals["#{parent_name}_assets"] = global[parent_name] = context = {}
+
+                favicon = "#{dir}/public/favicon.ico"
+                if exists favicon
+                        @use express.favicon(favicon, { maxAge: @config.staticMaxAge * 1000 })
+                if @config.connect_assets
+                        if exists "#{dir}/public"
+                                console.log "ASSETS #{dir}/public"
+                                middleware = connect_assets
+                                        src: "#{dir}/public"
+                                        helperContext: context
+                                @use middleware
                 if @config.stylus
                         console.log "setup public: #{dir}/public"
                         image_paths = "#{_dir}/public/images" for _dir in @config.dirs

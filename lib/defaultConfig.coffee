@@ -8,6 +8,7 @@ module.exports =
         session: true
         cookie: true
         stylus: true
+        connect_assets: true
         hogan: true
         less: false
         compress: true
