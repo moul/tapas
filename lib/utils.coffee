@@ -18,6 +18,5 @@ module.exports.deepExtend = deepExtend = (object, extenders...) ->
 
 module.exports.getParentFolderName = getParentFolderName = (pathname, exclude = []) ->
         basename = path.basename pathname
-        if basename in exclude
-                return getParentFolderName path.dirname pathname
+        return getParentFolderName path.dirname pathname if basename in exclude
         return basename

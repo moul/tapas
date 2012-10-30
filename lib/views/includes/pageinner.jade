@@ -19,7 +19,7 @@ block pageinner
   div(class=classes.content, class="span#{grid.content}")
     .hero-unit
       block title
-        h1.page-title= title
+        h1.page-title= (title ? title : site_name)
       include messages
       block content
         p Lorem Ipsum

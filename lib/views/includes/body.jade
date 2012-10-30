@@ -15,14 +15,15 @@ block header
               - for item, path in regions.navbarLinks
                 li(class=path == current && 'active')
                   a(href=path)= item
-          if true
-            form.navbar-form.pull-right
-              input.span2(type="text", placeholder="Email")
-              input.span2(type="password", placeholder="Password")
-              button.btn(type="submit") Sign in
-          else
-            .navbar-text.pull-right
-              | Logged in as 
+          if use.user.navbar
+            if true
+              form.navbar-form.pull-right
+                input.span2(type="text", placeholder="Email")
+                input.span2(type="password", placeholder="Password")
+                button.btn(type="submit") Sign in
+            else
+              .navbar-text.pull-right
+                | Logged in as 
               a.navbar-link(href="/user/42") Username
 block page
   #page(class=use.bootstrap.fluid && 'container-fluid' || 'container')

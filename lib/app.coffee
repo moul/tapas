@@ -361,8 +361,8 @@ class ksApp
                         res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
 
                 port = @process.env.PORT || @config.port
-                @http.listen port, -> console.log "Kickstart2 server listening on port #{port}"
+                @http.listen port, -> console.log "Tapas server listening on port #{port}"
                 process.on 'uncaughtException', @log.error.bind(@log)
-                @log.info 'Kickstart2 server started'
+                @log.info 'Tapas server started'
 
 module.exports = ksApp.create

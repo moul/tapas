@@ -1,8 +1,8 @@
-class Kickstart2
+class Tapas
         constructor: (@config) ->
 
         @create: (config) ->
-                new Kickstart2 config
+                new Tapas config
 
         app: () =>
                 require('./app') @
@@ -15,5 +15,5 @@ class Kickstart2
 
 
 
-module.exports = Kickstart2.create
+module.exports = Tapas.create
 module.exports.utils = require('./utils')

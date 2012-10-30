@@ -16,8 +16,8 @@ module.exports =
         viewEngine: 'jade' #hjs
         staticMaxAge: 86400
         locals:
-                title: 'Kickstart2'
-                site_name: 'Kickstart2'
+                title: ''
+                site_name: 'Tapas'
                 description: ""
                 css_libraries: []
                 js_libraries: []
@@ -28,6 +28,8 @@ module.exports =
                                 fixedNavbar: false
                                 fluid: false
                                 collapsibleNavbar: false
+                        user:
+                                navbar: false
                 menus:
                         navbar:
                                 '/':
