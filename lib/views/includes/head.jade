@@ -13,12 +13,15 @@ block head
     for css_library in css_libraries
       link(rel='stylesheet', href=css_library)
     if use.bootstrap
-      link(rel="stylesheet", href='/vendor/bootstrap/css/bootstrap.css')
+      != tapas_assets.css('/vendors/bootstrap/css/bootstrap-2.2.1')
+        if use.bootstrap.responsive
+          != tapas_assets.css('/vendors/bootstrap/css/bootstrap-responsive-2.2.1')
       if use.fontawesome
-        link(rel="stylesheet", href='/vendor/fontawesome/css/font-awesome.css')
+        != tapas_assets.css('/vendors/fontawesome/css/font-awesome')
+        //if lt IE 9
+          != tapas_assets.css('/vendors/fontawesome/css/font-awesome-ie7')
   block css_custom
-    != tapas_assets.css('tapas')
-    //- link(rel='stylesheet', href='/css/style.css')
+    != tapas_assets.css('/tapas')
     :stylus
       .sidebar-nav
         padding: 9px 0
@@ -30,15 +33,14 @@ block head
             padding-bottom: 40px
   block js_libraries
     //if lt IE 9
-      script(src="http://html5shim.googlecode.com/svn/trunk/html5.js", type="text/javascript")
+      != tapas_assets.js('/vendors/html5shim/html5shiv')
     block js_libraries_jquery
       //- todo: optional in settings: script(src='//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js', type="text/javascript")
       //- script window.jQuery || document.write('<script src="/vendor/jquery/jquery-1.8.1.js"><\\/script>')
-      script(src="/vendor/jquery/jquery-1.8.1.js", type="text/javascript")
+      != tapas_assets.js('/vendors/jquery/jquery-1.8.1')
     block js_libraries_modernizer
-      //- script(src='/vendor/modernizr-2.5.3.min.js', type="text/javascript")
+      != tapas_assets.js('/vendors/modernizr/modernizr-2.6.2')
     block js_libraries_plugins
-      //- script(src='/javascripts/plugins.js', type="text/javascript")
       //- != tapas_assets.js('plugins')
   block js_custom
-    != tapas_assets.js('tapas')
+    != tapas_assets.js('/tapas')

@@ -304,6 +304,9 @@ class ksApp
                                         src: "#{dir}/public"
                                         helperContext: context
                                 @use middleware
+                                context.css.root = '.'
+                                context.img.root = '.'
+                                context.js.root = '.'
                 if @config.stylus
                         console.log "setup public: #{dir}/public"
                         image_paths = "#{_dir}/public/images" for _dir in @config.dirs
