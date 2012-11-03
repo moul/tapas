@@ -2,7 +2,7 @@ module.exports =
     dirname: process.cwd() || __dirname
     dirs: [process.cwd(), __dirname]
     port: 3000
-    debug: true
+    debug: false
     cookie_secret: null
     session_secret: null
     session: true

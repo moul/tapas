@@ -28,7 +28,8 @@ class ksSubApp
                 @config.sub =
                         parent: parent
                         path: "#{@dir}/#{name}"
-                console.log "#{@config.sub.path}: autodiscovering"
+                if @config.debug
+                        console.log "#{@config.sub.path}: autodiscovering"
                 parent.setupPublic "#{@config.sub.path}"
                 @obj = require "#{@config.sub.path}"
                 @config.sub.name = @obj.name || name
@@ -52,21 +53,17 @@ class ksSubApp
                 for key of @obj
                         if ~['name', 'prefix', 'engine', 'before', 'locals', 'custom'].indexOf key
                                 continue
+                        method = 'get'
                         switch key
                                 when "show_json"
-                                        method = 'get'
                                         pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id/json"
                                 when "show"
-                                        method = 'get'
                                         pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                                 when "list"
-                                        method = "get"
                                         pathname = "/#{@config.sub.name}s"
                                 when "list_json"
-                                        method = "get"
                                         pathname = "/#{@config.sub.name}s/json"
                                 when 'edit'
-                                        method = 'get'
                                         pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id/edit"
                                 when 'update'
                                         method = 'put'
@@ -75,7 +72,6 @@ class ksSubApp
                                         method = 'post'
                                         pathname = "/{#@config.sub.name}"
                                 when 'index'
-                                        method = 'get'
                                         pathname = '/'
                                 else
                                         console.error "Unrecognized route: #{@config.sub.name}.#{key}"
@@ -291,6 +287,8 @@ class ksApp
                         res.write ';'
 
         setupPublic: (dir) =>
+                if not exists "#{dir}/public"
+                        return
                 parent_name = utils.getParentFolderName(dir, ["lib"])
                 @config.locals["#{parent_name}_assets"] = global[parent_name] = context = {}
 
@@ -299,7 +297,8 @@ class ksApp
                         @use express.favicon(favicon, { maxAge: @config.staticMaxAge * 1000 })
                 if @config.connect_assets
                         if exists "#{dir}/public"
-                                console.log "ASSETS #{dir}/public"
+                                if @config.debug
+                                        console.log "ASSETS #{dir}/public"
                                 middleware = connect_assets
                                         src: "#{dir}/public"
                                         helperContext: context
@@ -308,7 +307,8 @@ class ksApp
                                 context.img.root = '.'
                                 context.js.root = '.'
                 if @config.stylus
-                        console.log "setup public: #{dir}/public"
+                        if @config.debug
+                                console.log "setup public: #{dir}/public"
                         image_paths = "#{_dir}/public/images" for _dir in @config.dirs
                         @use stylus.middleware
                                 debug: @config.debug
@@ -330,8 +330,8 @@ class ksApp
 
                 if @config.hogan # && in development
                         pathname = "#{dir}/public/partials"
-                        console.log "setup hogan: #{pathname}"
                         if exists pathname
+                                console.log "setup hogan: #{pathname}"
                                 hoganTemplateRenderer = htc
                                         partialsDirectory: pathname
                                         layoutsDirectory: pathname
