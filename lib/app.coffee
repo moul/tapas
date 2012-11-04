@@ -281,7 +281,7 @@ class ksApp
                         res.contentType 'application/javascript'
                         # TODO: aggregate multiple modules hogans !
                         for htr in hoganTemplateRenderers
-                                console.log htr
+                                #console.log htr
                                 res.send htr.getSharedTemplates()
                                 return
                         res.write ';'
