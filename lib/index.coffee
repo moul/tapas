@@ -1,19 +1,17 @@
 class Tapas
-        constructor: (@config) ->
+    constructor: (@config) ->
 
-        @create: (config) ->
-                new Tapas config
+    @create: (config) ->
+        new Tapas config
 
-        app: () =>
-                require('./app') @
+    app: () =>
+        require('./app') @
 
-        cron: () =>
-                require('./cron') @
+    cron: () =>
+        require('./cron') @
 
-        worker: () =>
-                require('./worker') @
-
-
+    worker: () =>
+        require('./worker') @
 
 module.exports = Tapas.create
 module.exports.utils = require('./utils')
