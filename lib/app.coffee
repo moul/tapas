@@ -161,7 +161,8 @@ class ksApp
             if not @filename
                 throw new Error 'the "filename" option is required to extend templates'
             shortpath = @expect('extends').val.trim()
-            dirs = "#{dir}/views" for dir in @options.dirs
+            dirs = []
+            dirs.push "#{dir}/views" for dir in @options.dirs
             dirs = [path.dirname @filename].concat dirs
             for dir in dirs
                 pathname = path.join dir, "#{shortpath}.jade"
