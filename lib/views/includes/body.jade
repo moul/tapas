@@ -15,7 +15,7 @@ block header
               - for item, path in regions.navbarLinks
                 li(class=path == current && 'active')
                   a(href=path)= item
-          if use.user.navbar
+          if use && use.user && use.user.navbar
             if true
               form.navbar-form.pull-right
                 input.span2(type="text", placeholder="Email")
@@ -33,6 +33,6 @@ block footer
   if regions.footer
     hr
     footer#footer.footer
-      .container
+      div(class=use.bootstrap.fluid && 'container-fluid' || 'container')
         - for content, className in regions.footer
           div(class=className)!= content

@@ -1,4 +1,8 @@
 extends layout
 
 block content
-  p Welcome to #{site_name} !!!
+  .hero-unit
+    block title
+      h1.page-title= (title ? title : site_name)
+    include includes/messages
+    p Welcome to #{site_name} !!!

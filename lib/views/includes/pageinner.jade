@@ -17,13 +17,11 @@ block pageinner
         - for content, className in regions.left
           div(class=className)!= content
   div(class=classes.content, class="span#{grid.content}")
-    .hero-unit
+    block content
       block title
         h1.page-title= (title ? title : site_name)
       include messages
-      block content
-        p Lorem Ipsum
-        p: a.btn.btn-primary.btn-large Learn more &raquo;
+      block content_inner
   if menus.right || regions.right
     div.right(class=classes.right, class="span#{grid.right}")
       if menus.right
