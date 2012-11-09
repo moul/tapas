@@ -13,13 +13,15 @@ block head
     for css_library in css_libraries
       link(rel='stylesheet', href=css_library)
     if use.bootstrap
-      != tapas_assets.css('/vendors/bootstrap/css/bootstrap-2.2.1')
-        if use.bootstrap.responsive
-          != tapas_assets.css('/vendors/bootstrap/css/bootstrap-responsive-2.2.1')
       if use.fontawesome
+        != tapas_assets.css('/vendors/bootstrap/css/bootstrap-noicon-2.2.1')
         != tapas_assets.css('/vendors/fontawesome/css/font-awesome')
         //if lt IE 9
           != tapas_assets.css('/vendors/fontawesome/css/font-awesome-ie7')
+      else
+        != tapas_assets.css('/vendors/bootstrap/css/bootstrap-2.2.1')
+      if use.bootstrap.responsive
+        != tapas_assets.css('/vendors/bootstrap/css/bootstrap-responsive-2.2.1')
   block css_custom
     != tapas_assets.css('/tapas')
     :stylus
