@@ -10,11 +10,12 @@ jade =            require 'jade'
 stylus =          require 'stylus'
 nib =             require 'nib'
 io =              require 'socket.io'
-log =             require 'socket.io/lib/logger'
+iolog =           require 'socket.io/lib/logger'
 hogan =           require 'hogan.js'
 htc =             require 'hogan-template-compiler'
 connect_assets =  require 'connect-assets'
 exists =          fs.existsSync || path.existsSync
+winston =         require 'winston'
 
 utils =           require './utils'
 defaultConfig =   require './defaultConfig'
@@ -24,13 +25,14 @@ hoganCompilers = []
 
 class ksSubApp
     constructor: (@dir, name, parent) ->
+        @logger = parent.logger
         #@config = coffee.helpers.merge {}, parent.config
         @config = utils.deepExtend {}, parent.config
         @config.sub =
             parent: parent
             path: "#{@dir}/#{name}"
         if @config.debug
-            console.log "#{@config.sub.path}: autodiscovering"
+            @logger.log 'log', "#{@config.sub.path}: autodiscovering"
         parent.setupPublic "#{@config.sub.path}"
         @obj = require "#{@config.sub.path}"
         @config.sub.name = @obj.name || name
@@ -46,7 +48,7 @@ class ksSubApp
         if @obj.before
             for pathname in  ["/#{@config.sub.name}/:#{@config.sub.name}_id", "/#{@config.sub.name}/:#{@config.sub.name}_id/*"]
                 @app.all "#{@config.sub.prefix}#{pathname}", @obj.before
-                console.log "#{@config.sub.prefix}#{pathname}: ALL #{pathname} -> before"
+                @logger.log 'log', "#{@config.sub.prefix}#{pathname}: ALL #{pathname} -> before"
 
         if @obj.locals
             utils.deepExtend @config.locals, @obj.locals
@@ -75,10 +77,10 @@ class ksSubApp
                 when 'index'
                     pathname = '/'
                 else
-                    console.error "Unrecognized route: #{@config.sub.name}.#{key}"
+                    @logger.log 'error', "Unrecognized route: #{@config.sub.name}.#{key}"
                     #throw new Error "Unrecognized route: #{@config.sub.name}.#{key}"
             pathname = @config.sub.prefix + pathname
-            console.log "#{@config.sub.path}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
+            @logger.log 'log', "#{@config.sub.path}: handler #{method}(#{pathname}) -> #{typeof(@obj[key])}"
             @app[method] pathname, @obj[key]
         if @obj.custom?
             for entry in @obj.custom
@@ -87,7 +89,7 @@ class ksSubApp
                     path: null
                     callback: null
                     }
-                console.log "#{@config.sub.path}: custom handler #{entry.method}(#{entry.path} -> #{typeof(entry.callback)})"
+                @logger.log 'log', "#{@config.sub.path}: custom handler #{entry.method}(#{entry.path} -> #{typeof(entry.callback)})"
                 @app[entry.method] entry.path, entry.callback
         @app.locals = @config.locals
         #@app.use express.compiler { src: "#{@config.sub.path}/public", enable: ["coffeescript"] }
@@ -96,7 +98,7 @@ class ksSubApp
     #@__proto__ = jade.Compiler.prototype
 #    @visitTag = (node) ->
 #        parent = Compiler::visitTag
-#        console.log '=========='
+#        logger.log 'log', '=========='
 #        console.dir node
 
 
@@ -105,12 +107,20 @@ class ksApp
     subapps: {}
 
     constructor: (@ks) ->
+        @logger = new (winston.Logger)
+            transports: [
+                new (winston.transports.Console)
+                    colorize: true
+                    timestamp: true
+                    level: 'info'
+                ]
+
         @config = coffee.helpers.merge defaultConfig, @ks.config
         @config.locals = coffee.helpers.merge defaultConfig.locals, @config.locals
         @config.locals.print_errors = @config.debug
         @config.locals.dirs = @config.dirs
         @process = process
-        @log = new (log)()
+        @iolog = new (iolog)()
         do @ksAppInit
         if @config.ksAppConfigure
             do @ksAppConfigure
@@ -126,7 +136,7 @@ class ksApp
         @io.enable 'browser client minification'
         @io.enable 'browser client etag'
         @io.enable 'browser client gzip'
-        #@io.set 'log level', 5
+        @io.set 'log level', 2
 
 
     # wrappers
@@ -217,7 +227,10 @@ class ksApp
 
         if @config.viewOptions.pretty
             @config.locals.pretty = true
-        @use express.logger('dev')
+        winstonStream =
+            write: (message, encoding) ->
+                winston.info message
+        @use express.logger({stream: winstonStream})
         @use express.bodyParser()
         @use express.methodOverride()
 
@@ -275,15 +288,15 @@ class ksApp
 
         @configure 'production', =>
             if @config.compress
-                console.log "TODO: compress gzip"
+                @logger.log 'log', "TODO: compress gzip"
                 #@use gzippo.staticGzip....
         @app.locals = @config.locals
 
-        @app.get '/templates.js', (req, res) ->
+        @app.get '/templates.js', (req, res) =>
             res.contentType 'application/javascript'
             # TODO: aggregate multiple modules hogans !
             for htr in hoganTemplateRenderers
-                console.log htr
+                @logger.log 'log', htr
                 res.send htr.getSharedTemplates()
                 return
             res.write ';'
@@ -300,7 +313,7 @@ class ksApp
         if @config.connect_assets
             if exists "#{dir}/public"
                 if @config.debug
-                    console.log "ASSETS #{dir}/public"
+                    @logger.log 'log', "ASSETS #{dir}/public"
                 middleware = connect_assets
                     src: "#{dir}/public"
                     helperContext: context
@@ -310,7 +323,7 @@ class ksApp
                 context.js.root = '.'
         if @config.stylus
             if @config.debug
-                console.log "setup public: #{dir}/public"
+                @logger.log 'log', "setup public: #{dir}/public"
             image_paths = "#{_dir}/public/images" for _dir in @config.dirs
             @use stylus.middleware
                 debug: @config.debug
@@ -333,7 +346,7 @@ class ksApp
         if @config.hogan # && in development
             pathname = "#{dir}/public/partials"
             if exists pathname
-                console.log "setup hogan: #{pathname}"
+                @logger.log 'log', "setup hogan: #{pathname}"
                 hoganTemplateRenderer = htc
                     partialsDirectory: pathname
                     layoutsDirectory: pathname
@@ -348,26 +361,26 @@ class ksApp
 
     run: =>
         @configure 'development', =>
-            @use (req, res, next) ->
+            @use (req, res, next) =>
                 for htr in hoganTemplateRenderers
-                    console.log htr
+                    @logger.log 'log', htr
                     htr.read()
                 next()
 
         if true
-            @app.use (err, req, res, next) ->
+            @app.use (err, req, res, next) =>
                 if ~err.message.indexOf 'not found'
                     return next()
-                console.log 'error, err.stack'
-                console.error err.stack
+                @logger.log 'log', 'error, err.stack'
+                @logger.log 'error', err.stack
                 console.dir err
                 res.status(500).render('5xx', {title: "500: Internal Server Error", error: err, stack: err.stack})
         @app.use (req, res, next) ->
             res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
 
         port = @process.env.PORT || @config.port
-        @http.listen port, -> console.log "Tapas server listening on port #{port}"
-        process.on 'uncaughtException', @log.error.bind(@log)
-        @log.info 'Tapas server started'
+        @http.listen port, => @logger.log 'log', "Tapas server listening on port #{port}"
+        process.on 'uncaughtException', @iolog.error.bind(@log)
+        @iolog.info 'Tapas server started'
 
 module.exports = ksApp.create
