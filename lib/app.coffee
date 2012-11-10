@@ -137,6 +137,7 @@ class ksApp
         @io.enable 'browser client etag'
         @io.enable 'browser client gzip'
         @io.set 'log level', 2
+        @io.set 'logger', @logger
 
 
     # wrappers
