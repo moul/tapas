@@ -113,6 +113,7 @@ class ksApp
                     colorize: true
                     timestamp: true
                     level: 'info'
+                    #silent: true
                 ]
 
         @config = coffee.helpers.merge defaultConfig, @ks.config
@@ -137,7 +138,9 @@ class ksApp
         @io.enable 'browser client etag'
         @io.enable 'browser client gzip'
         @io.set 'log level', 2
-        @io.set 'logger', @logger
+        io_logger = @logger
+        io_logger.debug = ->
+        @io.set 'logger', io_logger
 
 
     # wrappers
@@ -230,6 +233,7 @@ class ksApp
             @config.locals.pretty = true
         winstonStream =
             write: (message, encoding) ->
+                console.dir message
                 winston.info message
         @use express.logger({stream: winstonStream})
         @use express.bodyParser()
