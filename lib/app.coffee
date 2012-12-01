@@ -72,7 +72,7 @@ class ksSubApp
                     method = 'put'
                     pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                 when 'create'
-                    #method = 'post'
+                    method = 'post'
                     pathname = "/#{@config.sub.name}"
                 when 'index'
                     pathname = '/'
