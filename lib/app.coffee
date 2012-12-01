@@ -379,7 +379,8 @@ class ksApp
             res.status(404).render('404', { title: "404: Not Found", url: req.originalUrl })
 
         port = @process.env.PORT || @config.port
-        @http.listen port, => @logger.log 'log', "Tapas server listening on port #{port}"
+        host = @process.env.HOST || null
+        @http.listen port, host, => @logger.log 'log', "Tapas server listening on port #{port}"
         process.on 'uncaughtException', @iolog.error.bind(@log)
         @iolog.info 'Tapas server started'
 
