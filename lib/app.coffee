@@ -72,7 +72,7 @@ class ksSubApp
                     method = 'put'
                     pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                 when 'create'
-                    method = 'post'
+                    #method = 'post'
                     pathname = "/#{@config.sub.name}"
                 when 'index'
                     pathname = '/'
@@ -154,11 +154,24 @@ class ksApp
             req.session.error = "Access denied !"
             res.redirect "/login"
 
-    autodiscover: (dir) =>
-        fs.readdirSync(dir).forEach (name) =>
-            if dir[0] != '/'
-                dir = "#{@config.dirname}/#{dir}"
-            @subapps["#{dir}/#{name}"] = new ksSubApp dir, name, @
+    autodiscover: (dir, options = {}) =>
+        options.order ?= {}
+        availables = fs.readdirSync(dir)
+        loaded = {}
+        for module in options.order
+            if module in availables
+                @autodiscover_load dir, module
+                loaded[module] = true
+            else
+                console.error "module #{module} is not available"
+        for module in availables
+            if not loaded[module]?
+                @autodiscover_load dir, module
+
+    autodiscover_load: (dir, name) =>
+        if dir[0] != '/'
+            dir = "#{@config.dirname}/#{dir}"
+        @subapps["#{dir}/#{name}"] = new ksSubApp dir, name, @
 
     ksAppConfigure: =>
         # override parseExtends
