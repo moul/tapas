@@ -1,7 +1,7 @@
 block head
   meta(charset='utf-8')
   meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
-  block head_title:
+  block head_title
     title= (typeof(title) != 'undefined' && title || "Welcome") + (typeof(site_name) != 'undefined' && (" | " + site_name) || "")
   if typeof(description) != 'undefined' && description != ''
     meta(name='description', content=description)
