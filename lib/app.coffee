@@ -54,7 +54,7 @@ class ksSubApp
             utils.deepExtend @config.locals, @obj.locals
 
         for key of @obj
-            if ~['name', 'prefix', 'engine', 'before', 'locals', 'custom'].indexOf key
+            if ~['open', 'name', 'prefix', 'engine', 'before', 'locals', 'custom'].indexOf key
                 continue
             method = 'get'
             switch key
@@ -94,6 +94,8 @@ class ksSubApp
         @app.locals = @config.locals
         #@app.use express.compiler { src: "#{@config.sub.path}/public", enable: ["coffeescript"] }
         parent.use @app
+        if @obj.open?
+            @obj.open @, parent
 #class ksExtendsJadeFilter extends jade.Compiler
     #@__proto__ = jade.Compiler.prototype
 #    @visitTag = (node) ->

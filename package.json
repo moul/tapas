@@ -4,7 +4,7 @@
   "description": "Preconfigured Express environment with multiple modules and helpers",
   "main": "index",
   "dependencies": {
-    "express": "~3.0.0beta7",
+    "express": "3.0.3",
     "hjs": "~0.0.4",
     "markdown": "~0.4.0",
     "stylus": "~0.28.2",
