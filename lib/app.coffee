@@ -45,6 +45,12 @@ class ksSubApp
         @config.locals.dirs = @config.dirs = [@config.sub.path].concat @config.dirs[..]
         @app.set 'views', ["#{dir}/views" for dir in @config.dirs][0]
 
+        if @obj.before_all
+            @app.all '*', @obj.before_all
+
+        if @obj.before_any_child
+            @app.all '#{@config.sub.name}', @obj.before_any_child
+
         if @obj.before
             for pathname in  ["/#{@config.sub.name}/:#{@config.sub.name}_id", "/#{@config.sub.name}/:#{@config.sub.name}_id/*"]
                 @app.all "#{@config.sub.prefix}#{pathname}", @obj.before
@@ -54,7 +60,7 @@ class ksSubApp
             utils.deepExtend @config.locals, @obj.locals
 
         for key of @obj
-            if ~['open', 'name', 'prefix', 'engine', 'before', 'locals', 'custom'].indexOf key
+            if ~['open', 'name', 'prefix', 'engine', 'before', 'locals', 'custom', 'before_all', 'before_any_child'].indexOf key
                 continue
             method = 'get'
             switch key
