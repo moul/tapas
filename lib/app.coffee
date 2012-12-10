@@ -335,9 +335,13 @@ class ksApp
             if exists "#{dir}/public"
                 if @config.debug
                     @logger.log 'info', "ASSETS #{dir}/public"
-                middleware = connect_assets
+                options =
                     src: "#{dir}/public"
                     helperContext: context
+                if /tapas\/lib/.test dir
+                    options.build = true
+                    options.detectChanges = false
+                middleware = connect_assets options
                 @use middleware
                 context.css.root = '.'
                 context.img.root = '.'
