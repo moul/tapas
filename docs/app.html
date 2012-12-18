@@ -1,0 +1,362 @@
+<!DOCTYPE html>  <html> <head>   <title>app.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="app.html">                 app.coffee               </a>                                           <a class="source" href="config.html">                 config.coffee               </a>                                           <a class="source" href="cron.html">                 cron.coffee               </a>                                           <a class="source" href="defaultConfig.html">                 defaultConfig.coffee               </a>                                           <a class="source" href="index.html">                 index.coffee               </a>                                           <a class="source" href="stream.html">                 stream.coffee               </a>                                           <a class="source" href="utils.html">                 utils.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               app.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nv">http = </span>           <span class="nx">require</span> <span class="s">&#39;http&#39;</span>
+<span class="nv">express = </span>        <span class="nx">require</span> <span class="s">&#39;express&#39;</span>
+<span class="nv">express_View = </span>   <span class="nx">require</span> <span class="s">&#39;express/lib/view&#39;</span>
+<span class="nv">express_Utils = </span>  <span class="nx">require</span> <span class="s">&#39;express/lib/utils&#39;</span>
+<span class="nv">coffee = </span>         <span class="nx">require</span> <span class="s">&#39;coffee-script&#39;</span>
+<span class="nv">path = </span>           <span class="nx">require</span> <span class="s">&#39;path&#39;</span>
+<span class="nv">fs = </span>             <span class="nx">require</span> <span class="s">&#39;fs&#39;</span>
+<span class="nv">connect = </span>        <span class="nx">require</span> <span class="s">&#39;connect&#39;</span>
+<span class="nv">jade = </span>           <span class="nx">require</span> <span class="s">&#39;jade&#39;</span>
+<span class="nv">stylus = </span>         <span class="nx">require</span> <span class="s">&#39;stylus&#39;</span>
+<span class="nv">nib = </span>            <span class="nx">require</span> <span class="s">&#39;nib&#39;</span>
+<span class="nv">io = </span>             <span class="nx">require</span> <span class="s">&#39;socket.io&#39;</span>
+<span class="nv">iolog = </span>          <span class="nx">require</span> <span class="s">&#39;socket.io/lib/logger&#39;</span>
+<span class="nv">hogan = </span>          <span class="nx">require</span> <span class="s">&#39;hogan.js&#39;</span>
+<span class="nv">htc = </span>            <span class="nx">require</span> <span class="s">&#39;hogan-template-compiler&#39;</span>
+<span class="nv">connect_assets = </span> <span class="nx">require</span> <span class="s">&#39;connect-assets&#39;</span>
+<span class="nv">exists = </span>         <span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span> <span class="o">||</span> <span class="nx">path</span><span class="p">.</span><span class="nx">existsSync</span>
+<span class="nv">winston = </span>        <span class="nx">require</span> <span class="s">&#39;winston&#39;</span>
+
+<span class="nv">utils = </span>          <span class="nx">require</span> <span class="s">&#39;./utils&#39;</span>
+<span class="nv">defaultConfig = </span>  <span class="nx">require</span> <span class="s">&#39;./defaultConfig&#39;</span>
+
+<span class="nv">hoganTemplateRenderers = </span><span class="p">[]</span>
+<span class="nv">hoganCompilers = </span><span class="p">[]</span>
+
+<span class="k">class</span> <span class="nx">ksSubApp</span>
+    <span class="nv">constructor: </span><span class="nf">(@dir, name, parent) -&gt;</span>
+        <span class="vi">@logger = </span><span class="nx">parent</span><span class="p">.</span><span class="nx">logger</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>@config = coffee.helpers.merge {}, parent.config</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="vi">@config = </span><span class="nx">utils</span><span class="p">.</span><span class="nx">deepExtend</span> <span class="p">{},</span> <span class="nx">parent</span><span class="p">.</span><span class="nx">config</span>
+        <span class="vi">@config.sub =</span>
+            <span class="nv">parent: </span><span class="nx">parent</span>
+            <span class="nv">path: </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">@dir</span><span class="si">}</span><span class="s">/</span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s">&quot;</span>
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">debug</span>
+            <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">path</span><span class="si">}</span><span class="s">: autodiscovering&quot;</span>
+        <span class="nx">parent</span><span class="p">.</span><span class="nx">setupPublic</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">path</span><span class="si">}</span><span class="s">&quot;</span>
+        <span class="vi">@obj = </span><span class="nx">require</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">path</span><span class="si">}</span><span class="s">&quot;</span>
+        <span class="vi">@config.sub.name = </span><span class="nx">@obj</span><span class="p">.</span><span class="nx">name</span> <span class="o">||</span> <span class="nx">name</span>
+        <span class="vi">@config.sub.prefix = </span><span class="nx">@obj</span><span class="p">.</span><span class="nx">prefix</span> <span class="o">||</span> <span class="s">&#39;&#39;</span>
+        <span class="vi">@config.locals.config = </span><span class="nx">@config</span>
+        <span class="vi">@config.locals.sub = </span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span>
+        <span class="vi">@app = </span><span class="nx">do</span> <span class="nx">express</span>
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">engine</span>
+            <span class="nx">@app</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;view engine&#39;</span><span class="p">,</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">engine</span>
+        <span class="vi">@config.locals.dirs = @config.dirs = </span><span class="p">[</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">path</span><span class="p">].</span><span class="nx">concat</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">dirs</span><span class="p">[..]</span>
+        <span class="nx">@app</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;views&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/views&quot;</span> <span class="k">for</span> <span class="nx">dir</span> <span class="k">in</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">dirs</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">before_all</span>
+            <span class="nx">@app</span><span class="p">.</span><span class="nx">all</span> <span class="s">&#39;*&#39;</span><span class="p">,</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">before_all</span>
+
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">before_any_child</span>
+            <span class="nx">@app</span><span class="p">.</span><span class="nx">all</span> <span class="s">&#39;#{@config.sub.name}&#39;</span><span class="p">,</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">before_any_child</span>
+
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">before</span>
+            <span class="k">for</span> <span class="nx">pathname</span> <span class="k">in</span>  <span class="p">[</span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">/:</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">_id&quot;</span><span class="p">,</span> <span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">/:</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">_id/*&quot;</span><span class="p">]</span>
+                <span class="nx">@app</span><span class="p">.</span><span class="nx">all</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">prefix</span><span class="si">}#{</span><span class="nx">pathname</span><span class="si">}</span><span class="s">&quot;</span><span class="p">,</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">before</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">prefix</span><span class="si">}#{</span><span class="nx">pathname</span><span class="si">}</span><span class="s">: ALL </span><span class="si">#{</span><span class="nx">pathname</span><span class="si">}</span><span class="s"> -&gt; before&quot;</span>
+
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">locals</span>
+            <span class="nx">utils</span><span class="p">.</span><span class="nx">deepExtend</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">locals</span><span class="p">,</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">locals</span>
+
+        <span class="k">for</span> <span class="nx">key</span> <span class="k">of</span> <span class="nx">@obj</span>
+            <span class="k">if</span> <span class="o">~</span><span class="p">[</span><span class="s">&#39;open&#39;</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;prefix&#39;</span><span class="p">,</span> <span class="s">&#39;engine&#39;</span><span class="p">,</span> <span class="s">&#39;before&#39;</span><span class="p">,</span> <span class="s">&#39;locals&#39;</span><span class="p">,</span> <span class="s">&#39;custom&#39;</span><span class="p">,</span> <span class="s">&#39;before_all&#39;</span><span class="p">,</span> <span class="s">&#39;before_any_child&#39;</span><span class="p">].</span><span class="nx">indexOf</span> <span class="nx">key</span>
+                <span class="k">continue</span>
+            <span class="nv">method = </span><span class="s">&#39;get&#39;</span>
+            <span class="k">switch</span> <span class="nx">key</span>
+                <span class="k">when</span> <span class="s">&quot;show_json&quot;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">/:</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">_id/json&quot;</span>
+                <span class="k">when</span> <span class="s">&quot;show&quot;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">/:</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">_id&quot;</span>
+                <span class="k">when</span> <span class="s">&quot;list&quot;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">s&quot;</span>
+                <span class="k">when</span> <span class="s">&quot;list_json&quot;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">s/json&quot;</span>
+                <span class="k">when</span> <span class="s">&#39;edit&#39;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">/:</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">_id/edit&quot;</span>
+                <span class="k">when</span> <span class="s">&#39;update&#39;</span>
+                    <span class="nv">method = </span><span class="s">&#39;put&#39;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">/:</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">_id&quot;</span>
+                <span class="k">when</span> <span class="s">&#39;create&#39;</span>
+                    <span class="nv">method = </span><span class="s">&#39;post&#39;</span>
+                    <span class="nv">pathname = </span><span class="s">&quot;/</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">&quot;</span>
+                <span class="k">when</span> <span class="s">&#39;index&#39;</span>
+                    <span class="nv">pathname = </span><span class="s">&#39;/&#39;</span>
+                <span class="k">else</span>
+                    <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;error&#39;</span><span class="p">,</span> <span class="s">&quot;Unrecognized route: </span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">name</span><span class="si">}</span><span class="s">.</span><span class="si">#{</span><span class="nx">key</span><span class="si">}</span><span class="s">&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>throw new Error "Unrecognized route: #{@config.sub.name}.#{key}"</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nv">pathname = </span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">prefix</span> <span class="o">+</span> <span class="nx">pathname</span>
+            <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">path</span><span class="si">}</span><span class="s">: handler </span><span class="si">#{</span><span class="nx">method</span><span class="si">}</span><span class="s">(</span><span class="si">#{</span><span class="nx">pathname</span><span class="si">}</span><span class="s">) -&gt; </span><span class="si">#{</span><span class="k">typeof</span><span class="p">(</span><span class="nx">@obj</span><span class="p">[</span><span class="nx">key</span><span class="p">])</span><span class="si">}</span><span class="s">&quot;</span>
+            <span class="nx">@app</span><span class="p">[</span><span class="nx">method</span><span class="p">]</span> <span class="nx">pathname</span><span class="p">,</span> <span class="nx">@obj</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">custom</span><span class="o">?</span>
+            <span class="k">for</span> <span class="nx">entry</span> <span class="k">in</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">custom</span>
+                <span class="nx">utils</span><span class="p">.</span><span class="nx">deepExtend</span> <span class="nx">entry</span><span class="p">,</span> <span class="p">{</span>
+                    <span class="nv">method: </span><span class="s">&#39;get&#39;</span>
+                    <span class="nv">path: </span><span class="kc">null</span>
+                    <span class="nv">callback: </span><span class="kc">null</span>
+                    <span class="p">}</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">sub</span><span class="p">.</span><span class="nx">path</span><span class="si">}</span><span class="s">: custom handler </span><span class="si">#{</span><span class="nx">entry</span><span class="p">.</span><span class="nx">method</span><span class="si">}</span><span class="s">(</span><span class="si">#{</span><span class="nx">entry</span><span class="p">.</span><span class="nx">path</span><span class="si">}</span><span class="s"> -&gt; </span><span class="si">#{</span><span class="k">typeof</span><span class="p">(</span><span class="nx">entry</span><span class="p">.</span><span class="nx">callback</span><span class="p">)</span><span class="si">}</span><span class="s">)&quot;</span>
+                <span class="nx">@app</span><span class="p">[</span><span class="nx">entry</span><span class="p">.</span><span class="nx">method</span><span class="p">]</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">callback</span>
+        <span class="vi">@app.locals = </span><span class="nx">@config</span><span class="p">.</span><span class="nx">locals</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>@app.use express.compiler { src: "#{@config.sub.path}/public", enable: ["coffeescript"] }</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">parent</span><span class="p">.</span><span class="nx">use</span> <span class="nx">@app</span>
+        <span class="k">if</span> <span class="nx">@obj</span><span class="p">.</span><span class="nx">open</span><span class="o">?</span>
+            <span class="nx">@obj</span><span class="p">.</span><span class="nx">open</span> <span class="nx">@</span><span class="p">,</span> <span class="nx">parent</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>class ksExtendsJadeFilter extends jade.Compiler
+@<strong>proto</strong> = jade.Compiler.prototype
+   @visitTag = (node) ->
+       parent = Compiler::visitTag
+       logger.log 'info', '=========='
+       console.dir node</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="k">class</span> <span class="nx">ksApp</span>
+    <span class="nv">subapps: </span><span class="p">{}</span>
+
+    <span class="nv">constructor: </span><span class="nf">(@ks) -&gt;</span>
+        <span class="vi">@logger = </span><span class="k">new</span> <span class="p">(</span><span class="nx">winston</span><span class="p">.</span><span class="nx">Logger</span><span class="p">)</span>
+            <span class="nv">transports: </span><span class="p">[</span>
+                <span class="k">new</span> <span class="p">(</span><span class="nx">winston</span><span class="p">.</span><span class="nx">transports</span><span class="p">.</span><span class="nx">Console</span><span class="p">)</span>
+                    <span class="nv">colorize: </span><span class="kc">true</span>
+                    <span class="nv">timestamp: </span><span class="kc">true</span>
+                    <span class="nv">level: </span><span class="s">&#39;info&#39;</span>
+                <span class="p">]</span>
+
+        <span class="vi">@config = </span><span class="nx">coffee</span><span class="p">.</span><span class="nx">helpers</span><span class="p">.</span><span class="nx">merge</span> <span class="nx">defaultConfig</span><span class="p">,</span> <span class="nx">@ks</span><span class="p">.</span><span class="nx">config</span>
+        <span class="vi">@config.locals = </span><span class="nx">coffee</span><span class="p">.</span><span class="nx">helpers</span><span class="p">.</span><span class="nx">merge</span> <span class="nx">defaultConfig</span><span class="p">.</span><span class="nx">locals</span><span class="p">,</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">locals</span>
+        <span class="vi">@config.locals.print_errors = </span><span class="nx">@config</span><span class="p">.</span><span class="nx">debug</span>
+        <span class="vi">@config.locals.dirs = </span><span class="nx">@config</span><span class="p">.</span><span class="nx">dirs</span>
+        <span class="vi">@process = </span><span class="nx">process</span>
+        <span class="vi">@iolog = </span><span class="k">new</span> <span class="p">(</span><span class="nx">iolog</span><span class="p">)()</span>
+        <span class="nx">do</span> <span class="nx">@ksAppInit</span>
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">ksAppConfigure</span>
+            <span class="nx">do</span> <span class="nx">@ksAppConfigure</span>
+
+    <span class="vi">@create: </span><span class="nf">(ks) -&gt;</span>
+        <span class="k">return</span> <span class="k">new</span> <span class="nx">ksApp</span><span class="p">(</span><span class="nx">ks</span><span class="p">)</span>
+
+    <span class="nv">ksAppInit: </span><span class="o">=&gt;</span>
+        <span class="vi">@express = @app = </span><span class="nx">do</span> <span class="nx">express</span>
+        <span class="vi">@http = </span><span class="nx">http</span><span class="p">.</span><span class="nx">createServer</span> <span class="nx">@app</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>@io = null</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="vi">@io = </span><span class="nx">io</span><span class="p">.</span><span class="nx">listen</span> <span class="nx">@http</span>
+        <span class="nx">@io</span><span class="p">.</span><span class="nx">enable</span> <span class="s">&#39;browser client minification&#39;</span>
+        <span class="nx">@io</span><span class="p">.</span><span class="nx">enable</span> <span class="s">&#39;browser client etag&#39;</span>
+        <span class="nx">@io</span><span class="p">.</span><span class="nx">enable</span> <span class="s">&#39;browser client gzip&#39;</span>
+        <span class="nx">@io</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;log level&#39;</span><span class="p">,</span> <span class="mi">2</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>wrappers</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">use: </span><span class="o">=&gt;</span>     <span class="nx">@app</span><span class="p">.</span><span class="nx">use</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">@app</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span>
+    <span class="nv">get: </span><span class="o">=&gt;</span>     <span class="nx">@app</span><span class="p">.</span><span class="nx">get</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">@app</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span>
+    <span class="nv">set: </span><span class="o">=&gt;</span>     <span class="nx">@app</span><span class="p">.</span><span class="nx">set</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">@app</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span>
+    <span class="nv">listen: </span><span class="o">=&gt;</span>      <span class="nx">@app</span><span class="p">.</span><span class="nx">listen</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">@app</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span>
+    <span class="nv">post: </span><span class="o">=&gt;</span>    <span class="nx">@app</span><span class="p">.</span><span class="nx">post</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">@app</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span>
+    <span class="nv">configure: </span><span class="o">=&gt;</span>   <span class="nx">@app</span><span class="p">.</span><span class="nx">configure</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">@app</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">)</span>
+
+    <span class="nv">restrict: </span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="o">=&gt;</span>
+        <span class="k">if</span> <span class="nx">req</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">user</span>
+            <span class="nx">do</span> <span class="nx">next</span>
+        <span class="k">else</span>
+            <span class="nv">req.session.error = </span><span class="s">&quot;Access denied !&quot;</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span> <span class="s">&quot;/login&quot;</span>
+
+    <span class="nv">autodiscover: </span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="nv">options = </span><span class="p">{})</span> <span class="o">=&gt;</span>
+        <span class="nx">options</span><span class="p">.</span><span class="nx">order</span> <span class="o">?=</span> <span class="p">{}</span>
+        <span class="nv">availables = </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readdirSync</span><span class="p">(</span><span class="nx">dir</span><span class="p">)</span>
+        <span class="nv">loaded = </span><span class="p">{}</span>
+        <span class="k">for</span> <span class="nx">module</span> <span class="k">in</span> <span class="nx">options</span><span class="p">.</span><span class="nx">order</span>
+            <span class="k">if</span> <span class="nx">module</span> <span class="k">in</span> <span class="nx">availables</span>
+                <span class="nx">@autodiscover_load</span> <span class="nx">dir</span><span class="p">,</span> <span class="nx">module</span>
+                <span class="nx">loaded</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">true</span>
+            <span class="k">else</span>
+                <span class="nx">console</span><span class="p">.</span><span class="nx">error</span> <span class="s">&quot;module </span><span class="si">#{</span><span class="nx">module</span><span class="si">}</span><span class="s"> is not available&quot;</span>
+        <span class="k">for</span> <span class="nx">module</span> <span class="k">in</span> <span class="nx">availables</span>
+            <span class="k">if</span> <span class="o">not</span> <span class="nx">loaded</span><span class="p">[</span><span class="nx">module</span><span class="p">]</span><span class="o">?</span>
+                <span class="nx">@autodiscover_load</span> <span class="nx">dir</span><span class="p">,</span> <span class="nx">module</span>
+
+    <span class="nv">autodiscover_load: </span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="o">=&gt;</span>
+        <span class="k">if</span> <span class="nx">dir</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;/&#39;</span>
+            <span class="nv">dir = </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">@config</span><span class="p">.</span><span class="nx">dirname</span><span class="si">}</span><span class="s">/</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">&quot;</span>
+        <span class="nx">@subapps</span><span class="p">[</span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/</span><span class="si">#{</span><span class="nx">name</span><span class="si">}</span><span class="s">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ksSubApp</span> <span class="nx">dir</span><span class="p">,</span> <span class="nx">name</span><span class="p">,</span> <span class="nx">@</span>
+
+    <span class="nv">ksAppConfigure: </span><span class="o">=&gt;</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>override parseExtends
+OU
+ajouter un filter smartExtends</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">require</span><span class="p">(</span><span class="s">&#39;jade&#39;</span><span class="p">).</span><span class="nv">Parser.prototype.parseExtends = </span><span class="o">-&gt;</span>
+            <span class="nv">path = </span><span class="nx">require</span> <span class="s">&#39;path&#39;</span>
+            <span class="nv">fs = </span><span class="nx">require</span> <span class="s">&#39;fs&#39;</span>
+            <span class="k">if</span> <span class="o">not</span> <span class="nx">@filename</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span> <span class="s">&#39;the &quot;filename&quot; option is required to extend templates&#39;</span>
+            <span class="nv">shortpath = </span><span class="nx">@expect</span><span class="p">(</span><span class="s">&#39;extends&#39;</span><span class="p">).</span><span class="nx">val</span><span class="p">.</span><span class="nx">trim</span><span class="p">()</span>
+            <span class="nv">dirs = </span><span class="p">[]</span>
+            <span class="nx">dirs</span><span class="p">.</span><span class="nx">push</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/views&quot;</span> <span class="k">for</span> <span class="nx">dir</span> <span class="k">in</span> <span class="nx">@options</span><span class="p">.</span><span class="nx">dirs</span>
+            <span class="nv">dirs = </span><span class="p">[</span><span class="nx">path</span><span class="p">.</span><span class="nx">dirname</span> <span class="nx">@filename</span><span class="p">].</span><span class="nx">concat</span> <span class="nx">dirs</span>
+            <span class="k">for</span> <span class="nx">dir</span> <span class="k">in</span> <span class="nx">dirs</span>
+                <span class="nv">pathname = </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span> <span class="nx">dir</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">shortpath</span><span class="si">}</span><span class="s">.jade&quot;</span>
+                <span class="k">if</span> <span class="nx">exists</span> <span class="nx">pathname</span>
+                    <span class="k">break</span>
+            <span class="nv">str = </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span> <span class="nx">pathname</span><span class="p">,</span> <span class="s">&#39;utf8&#39;</span>
+            <span class="nv">parser = </span><span class="k">new</span> <span class="nx">jade</span><span class="p">.</span><span class="nx">Parser</span> <span class="nx">str</span><span class="p">,</span> <span class="nx">pathname</span><span class="p">,</span> <span class="nx">@options</span>
+            <span class="nv">parser.blocks = </span><span class="nx">@blocks</span>
+            <span class="nv">parser.contexts = </span><span class="nx">@contexts</span>
+            <span class="vi">@extending = </span><span class="nx">parser</span>
+            <span class="k">new</span> <span class="nx">jade</span><span class="p">.</span><span class="nx">nodes</span><span class="p">.</span><span class="nx">Literal</span> <span class="s">&#39;&#39;</span>
+
+        <span class="nv">jade.filters.testManfred = </span><span class="nf">(block, compiler) -&gt;</span>
+            <span class="k">new</span> <span class="nx">ksExtendsJadeFilter</span> <span class="nx">block</span><span class="p">,</span> <span class="nx">compiler</span><span class="p">.</span><span class="nx">options</span>
+
+        <span class="nx">@set</span> <span class="s">&#39;views&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/views&quot;</span> <span class="k">for</span> <span class="nx">dir</span> <span class="k">in</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">dirs</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <p>multiple views</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nv">lookupProxy = </span><span class="nx">express_View</span><span class="o">::</span><span class="nx">lookup</span>
+        <span class="nv">lookupProxy = </span><span class="nf">(pathname) -&gt;</span>
+            <span class="nv">ext = </span><span class="nx">@ext</span>
+            <span class="k">if</span> <span class="o">!</span><span class="nx">express_Utils</span><span class="p">.</span><span class="nx">isAbsolute</span> <span class="nx">pathname</span>
+                <span class="nv">pathname = </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span> <span class="nx">@root</span><span class="p">,</span> <span class="nx">pathname</span>
+            <span class="k">if</span> <span class="nx">exists</span> <span class="nx">pathname</span>
+                <span class="k">return</span> <span class="nx">pathname</span>
+            <span class="nv">pathname = </span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">dirname</span><span class="p">(</span><span class="nx">pathname</span><span class="p">),</span> <span class="nx">path</span><span class="p">.</span><span class="nx">basename</span><span class="p">(</span><span class="nx">pathname</span><span class="p">,</span> <span class="nx">ext</span><span class="p">),</span> <span class="s">&#39;index&#39;</span> <span class="o">+</span> <span class="nx">ext</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nx">exists</span> <span class="nx">pathname</span>
+                <span class="k">return</span> <span class="nx">pathname</span>
+
+        <span class="nv">express_View::lookup = </span><span class="nf">(pathname) -&gt;</span>
+            <span class="k">if</span> <span class="nx">@root</span> <span class="k">instanceof</span> <span class="nb">Array</span>
+                <span class="nv">roots = </span><span class="nx">@root</span><span class="p">[..]</span>
+                <span class="nv">matchedView = </span><span class="kc">null</span>
+                <span class="k">for</span> <span class="nx">root</span> <span class="k">in</span> <span class="nx">roots</span>
+                    <span class="vi">@root = </span><span class="nx">root</span>
+                    <span class="nv">matchedView = </span><span class="nx">lookupProxy</span><span class="p">.</span><span class="nx">call</span> <span class="nx">@</span><span class="p">,</span> <span class="nx">pathname</span>
+                    <span class="k">if</span> <span class="nx">matchedView</span>
+                        <span class="k">break</span>
+                <span class="vi">@root = </span><span class="nx">roots</span>
+                <span class="k">return</span> <span class="nx">matchedView</span>
+            <span class="k">return</span> <span class="nx">lookupProxy</span><span class="p">.</span><span class="nx">call</span> <span class="nx">@</span><span class="p">,</span> <span class="nx">pathname</span>
+
+        <span class="nx">@set</span> <span class="s">&#39;view options&#39;</span><span class="p">,</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">viewOptions</span>
+        <span class="nx">@set</span> <span class="s">&#39;view engine&#39;</span><span class="p">,</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">viewEngine</span></pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-10">&#182;</a>               </div>               <p>res.message 'status message'</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="vi">@app.response.message = </span><span class="nf">(msg, type = &#39;info&#39;) -&gt;</span>
+            <span class="nv">sess = </span><span class="nx">@req</span><span class="p">.</span><span class="nx">session</span>
+            <span class="nv">sess.messages = </span><span class="nx">sess</span><span class="p">.</span><span class="nx">messages</span> <span class="o">||</span> <span class="p">{}</span>
+            <span class="nx">sess</span><span class="p">.</span><span class="nx">messages</span><span class="p">[</span><span class="nx">type</span><span class="p">]</span> <span class="o">=</span> <span class="nx">sess</span><span class="p">.</span><span class="nx">messages</span><span class="p">[</span><span class="nx">type</span><span class="p">]</span> <span class="o">||</span> <span class="p">[]</span>
+            <span class="nx">sess</span><span class="p">.</span><span class="nx">messages</span><span class="p">[</span><span class="nx">type</span><span class="p">].</span><span class="nx">push</span> <span class="nx">msg</span>
+            <span class="k">return</span> <span class="nx">@</span>
+
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">viewOptions</span><span class="p">.</span><span class="nx">pretty</span>
+            <span class="vi">@config.locals.pretty = </span><span class="kc">true</span>
+        <span class="nv">winstonStream =</span>
+            <span class="nv">write: </span><span class="nf">(message, encoding) -&gt;</span>
+                <span class="nx">winston</span><span class="p">.</span><span class="nx">info</span> <span class="nx">message</span>
+        <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">logger</span><span class="p">({</span><span class="nv">stream: </span><span class="nx">winstonStream</span><span class="p">})</span>
+        <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">bodyParser</span><span class="p">()</span>
+        <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">methodOverride</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="nx">dir</span> <span class="k">in</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">dirs</span>
+            <span class="nx">@setupPublic</span> <span class="nx">dir</span>
+
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">session</span> <span class="o">or</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">cookie</span>
+            <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">cookieParser</span><span class="p">(</span><span class="nx">@config</span><span class="p">.</span><span class="nx">cookie_secret</span> <span class="o">||</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">uniqueId</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">session</span>
+            <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">session</span><span class="p">(</span><span class="nx">@config</span><span class="p">.</span><span class="nx">session_secret</span> <span class="o">||</span> <span class="nx">utils</span><span class="p">.</span><span class="nx">uniqueId</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+
+            <span class="nx">@use</span> <span class="nf">(req, res, next) -&gt;</span>
+                <span class="nv">msgs = </span><span class="nx">req</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">messages</span> <span class="o">||</span> <span class="p">{}</span>
+                <span class="nv">count = </span><span class="mi">0</span>
+                <span class="nx">count</span> <span class="o">+=</span> <span class="nx">msgs</span><span class="p">[</span><span class="nx">type</span><span class="p">].</span><span class="nx">length</span> <span class="k">for</span> <span class="nx">type</span> <span class="k">of</span> <span class="nx">msgs</span>
+                <span class="nv">res.locals.messages = </span><span class="nx">msgs</span>
+                <span class="nv">res.locals.hasMessages = </span><span class="o">!!</span><span class="nx">count</span>
+                <span class="nv">req.session.messages = </span><span class="p">{}</span>
+                <span class="nx">do</span> <span class="nx">next</span>
+
+        <span class="nx">@use</span> <span class="nf">(req, res, next) -&gt;</span>
+            <span class="nv">res.locals.current = </span><span class="nx">req</span><span class="p">.</span><span class="nx">url</span>
+            <span class="nx">do</span> <span class="nx">next</span></pre></div>             </td>           </tr>                               <tr id="section-11">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-11">&#182;</a>               </div>               <p>TODO: @use extras.fixIP ['x-forwarded-for', 'forwarded-for', 'x-cluster-ip']</p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-12">&#182;</a>               </div>               <p>TODO: faire un @use qui ajoute des valeurs globales (title, options)
+TODO: ajouter express-extras
+TODO: voir pour utiliser process.cwd
+404, 500</p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-13">&#182;</a>               </div>               <p>for dir in @config.dirs
+   @use express.compiler
+       src: "#{dir}/public", enable: ["less"]</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">@use</span> <span class="nx">@app</span><span class="p">.</span><span class="nx">router</span></pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-14">&#182;</a>               </div>               <p>@app.dynamicHelpers
+   bli: (req) ->
+       return 'salut'</p>             </td>             <td class="code">               <div class="highlight"><pre></pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-15">&#182;</a>               </div>               <p>if config.cache
+   @use express.staticCache()</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">compress</span>
+            <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">compress</span><span class="p">()</span></pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-16">&#182;</a>               </div>               <p>TODO: auto-compile coffee</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">@configure</span> <span class="s">&#39;development&#39;</span><span class="p">,</span> <span class="o">=&gt;</span>
+            <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">errorHandler</span><span class="p">()</span>
+            <span class="vi">@config.locals.pretty = </span><span class="kc">true</span>
+
+        <span class="nx">@configure</span> <span class="s">&#39;production&#39;</span><span class="p">,</span> <span class="o">=&gt;</span>
+            <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">compress</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;TODO: compress gzip&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-17">&#182;</a>               </div>               <p>@use gzippo.staticGzip....</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="vi">@app.locals = </span><span class="nx">@config</span><span class="p">.</span><span class="nx">locals</span>
+
+        <span class="nx">@app</span><span class="p">.</span><span class="nx">get</span> <span class="s">&#39;/templates.js&#39;</span><span class="p">,</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="o">=&gt;</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">contentType</span> <span class="s">&#39;application/javascript&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-18">&#182;</a>               </div>               <p>TODO: aggregate multiple modules hogans !</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="k">for</span> <span class="nx">htr</span> <span class="k">in</span> <span class="nx">hoganTemplateRenderers</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="nx">htr</span>
+                <span class="nx">res</span><span class="p">.</span><span class="nx">send</span> <span class="nx">htr</span><span class="p">.</span><span class="nx">getSharedTemplates</span><span class="p">()</span>
+                <span class="k">return</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">write</span> <span class="s">&#39;;&#39;</span>
+
+    <span class="nv">setupPublic: </span><span class="p">(</span><span class="nx">dir</span><span class="p">)</span> <span class="o">=&gt;</span>
+        <span class="k">if</span> <span class="o">not</span> <span class="nx">exists</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span>
+            <span class="k">return</span>
+        <span class="nv">parent_name = </span><span class="nx">utils</span><span class="p">.</span><span class="nx">getParentFolderName</span><span class="p">(</span><span class="nx">dir</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;lib&quot;</span><span class="p">])</span>
+        <span class="nx">@config</span><span class="p">.</span><span class="nx">locals</span><span class="p">[</span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">parent_name</span><span class="si">}</span><span class="s">_assets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">global</span><span class="p">[</span><span class="nx">parent_name</span><span class="p">]</span> <span class="o">=</span> <span class="nv">context = </span><span class="p">{}</span>
+
+        <span class="nv">favicon = </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public/favicon.ico&quot;</span>
+        <span class="k">if</span> <span class="nx">exists</span> <span class="nx">favicon</span>
+            <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">favicon</span><span class="p">(</span><span class="nx">favicon</span><span class="p">,</span> <span class="p">{</span> <span class="nv">maxAge: </span><span class="nx">@config</span><span class="p">.</span><span class="nx">staticMaxAge</span> <span class="o">*</span> <span class="mi">1000</span> <span class="p">})</span>
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">connect_assets</span>
+            <span class="k">if</span> <span class="nx">exists</span> <span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span>
+                <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">debug</span>
+                    <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;ASSETS </span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span>
+                <span class="nv">options =</span>
+                    <span class="nv">src: </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span>
+                    <span class="nv">helperContext: </span><span class="nx">context</span>
+                <span class="k">if</span> <span class="sr">/tapas\/lib/</span><span class="p">.</span><span class="nx">test</span> <span class="nx">dir</span>
+                    <span class="nv">options.build = </span><span class="kc">true</span>
+                    <span class="nv">options.detectChanges = </span><span class="kc">false</span>
+                <span class="nv">middleware = </span><span class="nx">connect_assets</span> <span class="nx">options</span>
+                <span class="nx">@use</span> <span class="nx">middleware</span>
+                <span class="nv">context.css.root = </span><span class="s">&#39;.&#39;</span>
+                <span class="nv">context.img.root = </span><span class="s">&#39;.&#39;</span>
+                <span class="nv">context.js.root = </span><span class="s">&#39;.&#39;</span>
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">stylus</span>
+            <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">debug</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;setup public: </span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span>
+            <span class="nv">image_paths = </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">_dir</span><span class="si">}</span><span class="s">/public/images&quot;</span> <span class="k">for</span> <span class="nx">_dir</span> <span class="k">in</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">dirs</span>
+            <span class="nx">@use</span> <span class="nx">stylus</span><span class="p">.</span><span class="nx">middleware</span>
+                <span class="nv">debug: </span><span class="nx">@config</span><span class="p">.</span><span class="nx">debug</span>
+                <span class="nv">src: </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span>
+                <span class="nv">dest: </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span></pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <p>force: true</p>             </td>             <td class="code">               <div class="highlight"><pre>                <span class="nv">compile: </span><span class="nf">(str, path, fn) -&gt;</span>
+                    <span class="nv">s = </span><span class="nx">stylus</span> <span class="nx">str</span>
+                    <span class="nx">s</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;filename&#39;</span><span class="p">,</span> <span class="nx">path</span>
+                    <span class="nx">s</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;warn&#39;</span><span class="p">,</span> <span class="kc">true</span>
+                    <span class="nx">s</span><span class="p">.</span><span class="nx">set</span> <span class="s">&#39;compress&#39;</span><span class="p">,</span> <span class="kc">true</span></pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <p>s.use do nib</p>             </td>             <td class="code">               <div class="highlight"><pre>                    <span class="nx">s</span><span class="p">.</span><span class="nx">define</span> <span class="s">&#39;img&#39;</span><span class="p">,</span> <span class="nx">stylus</span><span class="p">.</span><span class="nx">url</span>
+                        <span class="nv">paths: </span><span class="nx">image_paths</span>
+                        <span class="nv">limit: </span><span class="mi">1000000</span>
+                    <span class="k">if</span> <span class="nx">fn</span><span class="o">?</span>
+                        <span class="nx">s</span><span class="p">.</span><span class="nx">render</span> <span class="nx">fn</span>
+                    <span class="k">return</span> <span class="nx">s</span>
+
+        <span class="k">if</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">hogan</span> <span class="c1"># &amp;&amp; in development</span>
+            <span class="nv">pathname = </span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public/partials&quot;</span>
+            <span class="k">if</span> <span class="nx">exists</span> <span class="nx">pathname</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&quot;setup hogan: </span><span class="si">#{</span><span class="nx">pathname</span><span class="si">}</span><span class="s">&quot;</span>
+                <span class="nv">hoganTemplateRenderer = </span><span class="nx">htc</span>
+                    <span class="nv">partialsDirectory: </span><span class="nx">pathname</span>
+                    <span class="nv">layoutsDirectory: </span><span class="nx">pathname</span>
+                <span class="nx">hoganTemplateRenderers</span><span class="p">.</span><span class="nx">push</span> <span class="nx">hoganTemplateRenderer</span>
+                <span class="nx">hoganCompilers</span><span class="p">.</span><span class="nx">push</span>
+                    <span class="nv">compile: </span><span class="nf">(source, options) -&gt;</span>
+                        <span class="nv">template = </span><span class="nx">hoganTemplateRenderer</span><span class="p">.</span><span class="nx">getTemplate</span> <span class="nx">options</span><span class="p">.</span><span class="nx">filename</span>
+                        <span class="k">return</span> <span class="nf">(locals) -&gt;</span>
+                            <span class="k">return</span> <span class="nx">template</span><span class="p">.</span><span class="nx">render</span> <span class="nx">locals</span><span class="p">,</span> <span class="nx">hoganTemplateRenderer</span><span class="p">.</span><span class="nx">getPartials</span><span class="p">()</span>
+
+        <span class="nx">@use</span> <span class="nx">express</span><span class="p">.</span><span class="nx">static</span><span class="p">(</span><span class="s">&quot;</span><span class="si">#{</span><span class="nx">dir</span><span class="si">}</span><span class="s">/public&quot;</span><span class="p">,</span> <span class="p">{</span> <span class="nv">maxAge: </span><span class="nx">@config</span><span class="p">.</span><span class="nx">staticMaxAge</span> <span class="o">*</span> <span class="mi">1000</span> <span class="p">})</span>
+
+    <span class="nv">run: </span><span class="o">=&gt;</span>
+        <span class="nx">@configure</span> <span class="s">&#39;development&#39;</span><span class="p">,</span> <span class="o">=&gt;</span>
+            <span class="nx">@use</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="o">=&gt;</span>
+                <span class="k">for</span> <span class="nx">htr</span> <span class="k">in</span> <span class="nx">hoganTemplateRenderers</span>
+                    <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="nx">htr</span>
+                    <span class="nx">htr</span><span class="p">.</span><span class="nx">read</span><span class="p">()</span>
+                <span class="nx">next</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="kc">true</span>
+            <span class="nx">@app</span><span class="p">.</span><span class="nx">use</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="o">=&gt;</span>
+                <span class="k">if</span> <span class="o">~</span><span class="nx">err</span><span class="p">.</span><span class="nx">message</span><span class="p">.</span><span class="nx">indexOf</span> <span class="s">&#39;not found&#39;</span>
+                    <span class="k">return</span> <span class="nx">next</span><span class="p">()</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="s">&#39;error, err.stack&#39;</span>
+                <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;error&#39;</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span>
+                <span class="nx">console</span><span class="p">.</span><span class="nx">dir</span> <span class="nx">err</span>
+                <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">500</span><span class="p">).</span><span class="nx">render</span><span class="p">(</span><span class="s">&#39;5xx&#39;</span><span class="p">,</span> <span class="p">{</span><span class="nv">title: </span><span class="s">&quot;500: Internal Server Error&quot;</span><span class="p">,</span> <span class="nv">error: </span><span class="nx">err</span><span class="p">,</span> <span class="nv">stack: </span><span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">})</span>
+        <span class="nx">@app</span><span class="p">.</span><span class="nx">use</span> <span class="nf">(req, res, next) -&gt;</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">404</span><span class="p">).</span><span class="nx">render</span><span class="p">(</span><span class="s">&#39;404&#39;</span><span class="p">,</span> <span class="p">{</span> <span class="nv">title: </span><span class="s">&quot;404: Not Found&quot;</span><span class="p">,</span> <span class="nv">url: </span><span class="nx">req</span><span class="p">.</span><span class="nx">originalUrl</span> <span class="p">})</span>
+
+        <span class="nv">port = </span><span class="nx">@process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PORT</span> <span class="o">||</span> <span class="nx">@config</span><span class="p">.</span><span class="nx">port</span>
+        <span class="nv">host = </span><span class="nx">@process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">HOST</span> <span class="o">||</span> <span class="kc">null</span>
+        <span class="nx">@http</span><span class="p">.</span><span class="nx">listen</span> <span class="nx">port</span><span class="p">,</span> <span class="nx">host</span><span class="p">,</span> <span class="o">=&gt;</span> <span class="nx">@logger</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;log&#39;</span><span class="p">,</span> <span class="s">&quot;Tapas server listening on port </span><span class="si">#{</span><span class="nx">port</span><span class="si">}</span><span class="s">&quot;</span>
+        <span class="nx">process</span><span class="p">.</span><span class="kc">on</span> <span class="s">&#39;uncaughtException&#39;</span><span class="p">,</span> <span class="nx">@iolog</span><span class="p">.</span><span class="nx">error</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">@log</span><span class="p">)</span>
+        <span class="nx">@iolog</span><span class="p">.</span><span class="nx">info</span> <span class="s">&#39;Tapas server started&#39;</span>
+
+<span class="nv">module.exports = </span><span class="nx">ksApp</span><span class="p">.</span><span class="nx">create</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>  <html> <head>   <title>defaultConfig.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="app.html">                 app.coffee               </a>                                           <a class="source" href="config.html">                 config.coffee               </a>                                           <a class="source" href="cron.html">                 cron.coffee               </a>                                           <a class="source" href="defaultConfig.html">                 defaultConfig.coffee               </a>                                           <a class="source" href="index.html">                 index.coffee               </a>                                           <a class="source" href="stream.html">                 stream.coffee               </a>                                           <a class="source" href="utils.html">                 utils.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               defaultConfig.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nv">path = </span><span class="nx">require</span> <span class="s">&#39;path&#39;</span>
+
+<span class="nv">module.exports =</span>
+    <span class="nv">dirname: </span><span class="nx">process</span><span class="p">.</span><span class="nx">cwd</span><span class="p">()</span> <span class="o">||</span> <span class="nx">__dirname</span>
+    <span class="nv">dirs: </span><span class="p">[</span><span class="nx">process</span><span class="p">.</span><span class="nx">cwd</span><span class="p">(),</span> <span class="nx">__dirname</span><span class="p">,</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="s">&#39;..&#39;</span><span class="p">)]</span>
+    <span class="nv">port: </span><span class="mi">3000</span>
+    <span class="nv">debug: </span><span class="kc">false</span>
+    <span class="nv">cookie_secret: </span><span class="kc">null</span>
+    <span class="nv">session_secret: </span><span class="kc">null</span>
+    <span class="nv">session: </span><span class="kc">true</span>
+    <span class="nv">cookie: </span><span class="kc">true</span>
+    <span class="nv">stylus: </span><span class="kc">true</span>
+    <span class="nv">connect_assets: </span><span class="kc">true</span>
+    <span class="nv">hogan: </span><span class="kc">true</span>
+    <span class="nv">less: </span><span class="kc">false</span>
+    <span class="nv">compress: </span><span class="kc">true</span>
+    <span class="nv">cache: </span><span class="kc">true</span>
+    <span class="nv">viewEngine: </span><span class="s">&#39;jade&#39;</span> <span class="c1">#hjs</span>
+    <span class="nv">staticMaxAge: </span><span class="mi">86400</span>
+    <span class="nv">locals:</span>
+        <span class="nv">title: </span><span class="s">&#39;&#39;</span>
+        <span class="nv">site_name: </span><span class="s">&#39;Tapas&#39;</span>
+        <span class="nv">description: </span><span class="s">&quot;&quot;</span>
+        <span class="nv">css_libraries: </span><span class="p">[]</span>
+        <span class="nv">js_libraries: </span><span class="p">[]</span>
+        <span class="nv">use:</span>
+            <span class="nv">fontawesome: </span><span class="kc">true</span>
+            <span class="nv">bootstrap:</span>
+                <span class="nv">responsive: </span><span class="kc">false</span>
+                <span class="nv">navbar:</span>
+                    <span class="nv">fixed: </span><span class="kc">false</span>
+                <span class="nv">fixedNavbar: </span><span class="kc">false</span>
+                <span class="nv">fluid: </span><span class="kc">false</span>
+                <span class="nv">collapsibleNavbar: </span><span class="kc">false</span>
+            <span class="nv">user:</span>
+                <span class="nv">navbar: </span><span class="kc">false</span>
+        <span class="nv">menus:</span>
+            <span class="nv">navbar:</span>
+                <span class="s">&#39;/&#39;</span><span class="o">:</span>
+                    <span class="nv">title: </span><span class="s">&#39;Home&#39;</span>
+            <span class="nv">primary:</span>
+                <span class="s">&#39;/&#39;</span><span class="o">:</span>
+                    <span class="nv">title: </span><span class="s">&#39;Home&#39;</span>
+                <span class="s">&#39;/login&#39;</span><span class="o">:</span>
+                    <span class="nv">title: </span><span class="s">&#39;Login&#39;</span>
+                <span class="s">&#39;/register&#39;</span><span class="o">:</span>
+                    <span class="nv">title: </span><span class="s">&#39;Register&#39;</span>
+                <span class="s">&#39;/logout&#39;</span><span class="o">:</span>
+                    <span class="nv">title: </span><span class="s">&#39;Logout&#39;</span>
+        <span class="nv">regions:</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>left:
+navbar:
+content:
+left:
+right:</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nv">footer:</span>
+                <span class="s">&#39;copyright&#39;</span><span class="o">:</span> <span class="s">&#39;&lt;p&gt;Copyright 2012&lt;/p&gt;&#39;</span>
+                <span class="s">&#39;backToTop&#39;</span><span class="o">:</span> <span class="s">&#39;&lt;p class=&quot;pull-right&quot;&gt;&lt;a href=&quot;#&quot;&gt;Back to top&lt;/a&gt;&lt;/p&gt;&#39;</span>
+        <span class="nv">grid:</span>
+            <span class="nv">size: </span><span class="mi">12</span>
+            <span class="nv">content: </span><span class="mi">12</span>
+            <span class="nv">left: </span><span class="mi">3</span>
+            <span class="nv">right: </span><span class="mi">3</span>
+        <span class="nv">classes:</span>
+            <span class="nv">content: </span><span class="p">[]</span>
+            <span class="nv">left: </span><span class="p">[]</span>
+            <span class="nv">right: </span><span class="p">[]</span>
+    <span class="nv">viewOptions:</span>
+        <span class="nv">layout: </span><span class="kc">false</span>
+        <span class="nv">pretty: </span><span class="kc">false</span>
+        <span class="nv">complexNames: </span><span class="kc">true</span>
+    <span class="nv">ksAppConfigure: </span><span class="kc">true</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
