@@ -173,7 +173,7 @@ class ksApp
             else
                 console.error "module #{module} is not available"
         for module in availables
-            if not loaded[module]?
+            unless loaded[module]?
                 @autodiscover_load dir, module
 
     autodiscover_load: (dir, name) =>
@@ -206,8 +206,8 @@ class ksApp
             @extending = parser
             new jade.nodes.Literal ''
 
-        jade.filters.testManfred = (block, compiler) ->
-            new ksExtendsJadeFilter block, compiler.options
+        #jade.filters.testManfred = (block, compiler) ->
+        #    new ksExtendsJadeFilter block, compiler.options
 
         @set 'views', ["#{dir}/views" for dir in @config.dirs][0]
         # multiple views

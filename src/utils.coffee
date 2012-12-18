@@ -7,10 +7,10 @@ module.exports.uniqueId = (length = 8) ->
     id.substr 0, length
 
 module.exports.deepExtend = deepExtend = (object, extenders...) ->
-    return {} if not object?
+    return {} unless object?
     for other in extenders
         for own key, val of other
-            object[key] = if not object[key]? or typeof val isnt "object" then val else deepExtend object[key], val
+            object[key] = unless object[key]? or typeof val isnt "object" then val else deepExtend object[key], val
     object
 
 module.exports.getParentFolderName = getParentFolderName = (pathname, exclude = []) ->

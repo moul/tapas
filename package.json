@@ -18,8 +18,6 @@
     "hogan-template-compiler": "",
     "connect-assets": "",
     "coffee-script": "",
-    "stylus": "",
-    "nib": "",
     "bootstrap-stylus": "",
     "less": "",
     "winston": "0.6.2"
