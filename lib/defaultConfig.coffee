@@ -1,6 +1,8 @@
+path = require 'path'
+
 module.exports =
     dirname: process.cwd() || __dirname
-    dirs: [process.cwd(), __dirname]
+    dirs: [process.cwd(), __dirname, path.join(__dirname, '..')]
     port: 3000
     debug: false
     cookie_secret: null
