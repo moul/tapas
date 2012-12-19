@@ -248,8 +248,8 @@ class ksApp
             sess.messages[type].push msg
             return @
 
-        if @config.viewOptions.pretty
-            @config.locals.pretty = true
+        @config.locals.pretty = !!@config.viewOptions.pretty
+
         winstonStream =
             write: (message, encoding) ->
                 winston.info message
@@ -340,7 +340,7 @@ class ksApp
                 options =
                     src: "#{dir}/public"
                     helperContext: context
-                if /tapas\/lib/.test dir
+                if /tapas$/.test dir
                     options.build = true
                     options.detectChanges = false
                 middleware = connect_assets options
