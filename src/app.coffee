@@ -1,3 +1,4 @@
+_ =               require 'underscore'
 http =            require 'http'
 express =         require 'express'
 express_View =    require 'express/lib/view'
@@ -16,6 +17,7 @@ htc =             require 'hogan-template-compiler'
 connect_assets =  require 'connect-assets'
 exists =          fs.existsSync || path.existsSync
 winston =         require 'winston'
+util =            require 'util'
 
 utils =           require './utils'
 defaultConfig =   require './defaultConfig'
@@ -90,11 +92,11 @@ class ksSubApp
             @app[method] pathname, @obj[key]
         if @obj.custom?
             for entry in @obj.custom
-                utils.deepExtend entry, {
+                default_values =
                     method: 'get'
                     path: null
                     callback: null
-                    }
+                entry = _.defaults entry, default_values
                 @logger.log 'info', "#{@config.sub.path}: custom handler #{entry.method}(#{entry.path} -> #{typeof(entry.callback)})"
                 @app[entry.method] entry.path, entry.callback
         @app.locals = @config.locals
