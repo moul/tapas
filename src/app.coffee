@@ -79,6 +79,9 @@ class ksSubApp
                 when 'update'
                     method = 'put'
                     pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
+                when 'delete'
+                    method = 'delete'
+                    pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                 when 'create'
                     method = 'post'
                     pathname = "/#{@config.sub.name}"
