@@ -323,6 +323,8 @@ class ksApp
             # TODO: aggregate multiple modules hogans !
             for htr in hoganTemplateRenderers
                 @logger.log 'info', htr
+                if @config.debug
+                  htr.read()
                 res.send htr.getSharedTemplates()
                 return
             res.write ';'
