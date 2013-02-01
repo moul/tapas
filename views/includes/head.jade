@@ -37,9 +37,13 @@ block head
     //if lt IE 9
       != tapas_assets.js('/vendors/html5shim/html5shiv')
     block js_libraries_jquery
-      //- todo: optional in settings: script(src='//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js', type="text/javascript")
-      //- script window.jQuery || document.write('<script src="/vendor/jquery/jquery-1.8.1.js"><\\/script>')
-      != tapas_assets.js('/vendors/jquery/jquery-1.8.1')
+      if use.jquery
+        //- todo: optional in settings: script(src='//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js', type="text/javascript")
+        //- script window.jQuery || document.write('<script src="/vendor/jquery/jquery-1.8.1.js"><\\/script>')
+        != tapas_assets.js('/vendors/jquery/jquery-1.8.1')
+    block js_libraries_angular
+      if use.angular
+        != tapas_assets.js('/vendors/angular/angular-1.0.4')
     block js_libraries_modernizer
       != tapas_assets.js('/vendors/modernizr/modernizr-2.6.2')
     block js_libraries_plugins
