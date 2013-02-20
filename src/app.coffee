@@ -39,6 +39,7 @@ class ksSubApp
         @obj = require "#{@config.sub.path}"
         @config.sub.name = @obj.name || name
         @config.sub.prefix = @obj.prefix || ''
+        @config.sub.plural = @obj.plural || "#{@config.sub.name}s"
         @config.locals.config = @config
         @config.locals.sub = @config.sub
         @app = do express
@@ -62,7 +63,7 @@ class ksSubApp
             utils.deepExtend @config.locals, @obj.locals
 
         for key of @obj
-            if ~['open', 'name', 'prefix', 'engine', 'before', 'locals', 'custom', 'before_all', 'before_any_child'].indexOf key
+            if ~['open', 'name', 'plural', 'prefix', 'engine', 'before', 'locals', 'custom', 'before_all', 'before_any_child'].indexOf key
                 continue
             method = 'get'
             switch key
@@ -71,9 +72,9 @@ class ksSubApp
                 when "show"
                     pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id"
                 when "list"
-                    pathname = "/#{@config.sub.name}s"
+                    pathname = "/#{@config.sub.plural}"
                 when "list_json"
-                    pathname = "/#{@config.sub.name}s/json"
+                    pathname = "/#{@config.sub.plural}/json"
                 when 'edit'
                     pathname = "/#{@config.sub.name}/:#{@config.sub.name}_id/edit"
                 when 'update'
@@ -100,7 +101,7 @@ class ksSubApp
                     path: null
                     callback: null
                 entry = _.defaults entry, default_values
-                @logger.log 'info', "#{@config.sub.path}: custom handler #{entry.method}(#{entry.path} -> #{typeof(entry.callback)})"
+                @logger.log 'info', "#{@config.sub.path}: custom #{entry.method}(#{entry.path}) -> #{typeof(entry.callback)}"
                 @app[entry.method] entry.path, entry.callback
         @app.locals = @config.locals
         #@app.use express.compiler { src: "#{@config.sub.path}/public", enable: ["coffeescript"] }
