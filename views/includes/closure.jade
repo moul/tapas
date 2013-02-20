@@ -6,5 +6,5 @@ block google_analytics
       g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
       s.parentNode.insertBefore(g,s)}(document,'script'));
 
-if use.bootstrap
+if use.bootstrap && use.jquery
   != tapas_assets.js('/vendors/bootstrap/js/bootstrap-2.2.1')

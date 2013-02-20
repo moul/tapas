@@ -1,6 +1,6 @@
 {
   "name": "tapas",
-  "version": "0.0.6",
+  "version": "0.1.1",
   "description": "Preconfigured Express environment with multiple modules and helpers",
   "main": "index",
   "dependencies": {
@@ -53,6 +53,16 @@
     "api"
   ],
   "homepage": "https://github.com/moul/tapas",
-  "author": "Manfred Touron <m@42.am>",
-  "license": "MIT"
+  "author": {
+    "name": "Manfred Touron",
+    "email": "m@42.am"
+  },
+  "license": "MIT",
+  "readme": "Tapas\n=====\n\nPreconfigured Express environment with multiple modules and helpers.\n\n```bash\nnpm install tapas\n```\n",
+  "readmeFilename": "README.md",
+  "_id": "tapas@0.0.6",
+  "dist": {
+    "shasum": "3bffaee42c29ad761d2e05eef1d6a14d95cce156"
+  },
+  "_from": "tapas@git://github.com/moul/tapas.git"
 }

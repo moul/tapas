@@ -34,6 +34,8 @@ module.exports =
                 collapsibleNavbar: false
             user:
                 navbar: false
+            jquery:  true
+            angular: true
         menus:
             navbar:
                 '/':

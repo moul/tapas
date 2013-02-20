@@ -1,7 +1,9 @@
 include includes/doctype
-  head
-    include includes/head
-  body
-    block body
-      include includes/body
-      include includes/closure
+  block html
+    head
+      block head
+        include includes/head
+    body
+      block body
+        include includes/body
+        include includes/closure
