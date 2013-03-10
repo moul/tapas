@@ -9,7 +9,13 @@ module.exports.deepExtend = deepExtend = (object, extenders...) ->
   return {} unless object?
   for other in extenders
     for own key, val of other
-      object[key] = unless object[key]? or typeof val isnt "object" then val else deepExtend object[key], val
+      console.log key, val
+      unless object[key]?# or typeof val isnt "object"
+        console.log 'a'
+        object[key] = val
+      else
+        console.log 'b'
+        object[key] = deepExtend object[key], val
   object
 
 module.exports.getParentFolderName = getParentFolderName = (pathname, exclude = []) ->
