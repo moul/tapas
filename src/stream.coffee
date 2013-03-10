@@ -1,2 +1,2 @@
 module.exports = ->
-    console.log "Running stream"
+  console.log "Running stream"

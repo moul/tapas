@@ -1,2 +1,2 @@
 module.exports = ->
-    console.log "Running cron"
+  console.log "Running cron"
