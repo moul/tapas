@@ -47,6 +47,8 @@ block head
         script angular.module('tapas', []);
         if use.angularUi
           != tapas_assets.js('/vendors/angular-ui/ui-bootstrap-0.2.0.min')
+          != tapas_assets.js('/vendors/angular-ui/ui-bootstrap-tpls-0.2.0')
+          script angular.module('tapas', ['ui.bootstrap']);
     block js_libraries_modernizer
       != tapas_assets.js('/vendors/modernizr/modernizr-2.6.2')
     block js_libraries_plugins
