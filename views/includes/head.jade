@@ -44,6 +44,7 @@ block head
     block js_libraries_angular
       if use.angular
         != tapas_assets.js('/vendors/angular/angular-1.0.4')
+        script angular.module('tapas', []);
         if use.angularUi
           != tapas_assets.js('/vendors/angular-ui/ui-bootstrap-0.2.0.min')
     block js_libraries_modernizer
