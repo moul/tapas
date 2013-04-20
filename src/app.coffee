@@ -1,25 +1,24 @@
-_ =         require 'underscore'
-http =      require 'http'
-express =     require 'express'
-express_View =  require 'express/lib/view'
+_ =               require 'underscore'
+http =            require 'http'
+express =         require 'express'
+express_View =    require 'express/lib/view'
 express_Utils =   require 'express/lib/utils'
-coffee =      require 'coffee-script'
-path =      require 'path'
-fs =        require 'fs'
-connect =     require 'connect'
-jade =      require 'jade'
-stylus =      require 'stylus'
-nib =       require 'nib'
-io =        require 'socket.io'
-iolog =       require 'socket.io/lib/logger'
-hogan =       require 'hogan.js'
-htc =       require 'hogan-template-compiler'
+coffee =          require 'coffee-script'
+path =            require 'path'
+fs =              require 'fs'
+connect =         require 'connect'
+jade =            require 'jade'
+stylus =          require 'stylus'
+nib =             require 'nib'
+io =              require 'socket.io'
+iolog =           require 'socket.io/lib/logger'
+hogan =           require 'hogan.js'
+htc =             require 'hogan-template-compiler'
 connect_assets =  require 'connect-assets'
-exists =      fs.existsSync || path.existsSync
-winston =     require 'winston'
-util =      require 'util'
-
-utils =       require './utils'
+exists =          fs.existsSync || path.existsSync
+winston =         require 'winston'
+util =            require 'util'
+utils =           require './utils'
 defaultConfig =   require './defaultConfig'
 
 hoganTemplateRenderers = []
@@ -133,6 +132,16 @@ class ksApp
     @config.locals = coffee.helpers.merge defaultConfig.locals, @config.locals
     @config.locals.print_errors = @config.debug
     @config.locals.dirs = @config.dirs
+    if @config.newRelic.license_key
+      process.env.NEW_RELIC_NO_CONFIG_FILE ?= true
+      options = @config.newRelic
+      options.app_name ?= ["Tapas: #{@config.locals.site_name}"]
+      options.component ?= 'express_random_delays'
+      process.env.NEW_RELIC_APP_NAME ?= options.app_name
+      process.env.NEW_RELIC_LICENSE_KEY ?= options.license_key
+      require 'newrelic'
+      @logger = require('newrelic/lib/logger').child options
+      @logger.log = @logger.trace
     @process = process
     @iolog = new (iolog)()
     do @ksAppInit

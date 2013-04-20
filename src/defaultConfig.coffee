@@ -17,6 +17,11 @@ module.exports =
   cache: true
   viewEngine: 'jade' #hjs
   staticMaxAge: 86400
+  newRelic:
+    license_key: null
+    app_name: null
+    logging:
+      level: 'trace'
   locals:
     title: ''
     site_name: 'Tapas'
