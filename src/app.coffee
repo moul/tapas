@@ -343,6 +343,7 @@ class ksApp
     if not exists "#{dir}/public"
       return
     parent_name = utils.getParentFolderName(dir, ["lib"])
+    parent_name = parent_name.replace(/[^a-zA-Z0-9]/, '_')
     @config.locals["#{parent_name}_assets"] = global[parent_name] = context = {}
 
     favicon = "#{dir}/public/favicon.ico"
